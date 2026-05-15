@@ -1,0 +1,880 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mystery Dungeon Maker</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="hero">
+        <div class="hero-copy">
+          <div class="title-row">
+            <h1>Mystery Dungeon Maker</h1>
+            <p class="eyebrow">Prototype 01</p>
+          </div>
+          <p class="lede">
+            Build a mystery dungeon by changing the rules, then share the recipe
+            code so other players can run your challenge.
+          </p>
+        </div>
+        <div class="run-card hidden">
+          <span id="floorLabel">Floor 1 / 8</span>
+          <strong id="statusLabel">Tune a recipe, then generate.</strong>
+        </div>
+      </section>
+
+      <section class="layout">
+        <aside class="panel creator-panel" aria-label="Dungeon creator settings">
+          <div class="panel-heading">
+            <h2>Dungeon Recipe</h2>
+            <div class="button-row">
+              <button id="extendRecipeButton" type="button">Extend Recipe</button>
+              <button id="hideRecipeButton" type="button">Hide Recipe</button>
+            </div>
+          </div>
+
+          <div class="recipe-action-grid">
+            <button id="generateButton" type="button" class="primary">Generate Dungeon</button>
+            <button id="randomizeButton" type="button">Surprise Me</button>
+            <button id="copyButton" type="button">Copy Share Code</button>
+            <button id="publishButton" type="button">Publish Locally</button>
+          </div>
+
+          <label>
+            Share Code
+            <textarea id="shareCode" rows="4" spellcheck="false"></textarea>
+          </label>
+          <button id="loadButton" type="button">Load From Share Code</button>
+          <div class="package-action-row">
+            <button id="exportPackageButton" type="button">Export Full Package</button>
+            <button id="importPackageButton" type="button">Import Full Package</button>
+            <input id="importPackageInput" type="file" accept=".mdmpkg,.json,application/json" class="hidden" />
+          </div>
+
+          <section class="published-browser" aria-label="Published local dungeons">
+            <div class="panel-heading">
+              <h2>Published Dungeons</h2>
+              <span id="publishedCount">0 saved</span>
+            </div>
+            <div id="publishedList" class="published-list"></div>
+          </section>
+
+          <label>
+            Dungeon Name
+            <input id="dungeonName" maxlength="32" value="Goblin Pantry" />
+          </label>
+
+          <label>
+            Description
+            <textarea
+              id="dungeonDescription"
+              rows="3"
+              maxlength="240"
+              placeholder="Leave a note, explain the challenge, or share a message with other players."
+            ></textarea>
+          </label>
+
+          <section class="environment-stage-builder" aria-label="Dungeon aesthetics builder">
+            <div class="panel-heading">
+              <h3>Dungeon Builder</h3>
+              <div class="button-row">
+                <button id="addEnvironmentStageButton" type="button">Add Area</button>
+                <button id="addCustomEnvironmentButton" type="button">Add Custom Area</button>
+              </div>
+            </div>
+            <select id="environment" class="hidden" aria-hidden="true" tabindex="-1">
+              <option value="ruins">Ancient Ruins</option>
+              <option value="fungal">Fungal Grotto</option>
+              <option value="ember">Ember Vault</option>
+              <option value="frost">Frost Archive</option>
+              <option value="cosmic">Cosmic Escape</option>
+              <option value="beach">Dashing Beach</option>
+              <option value="ghastly">Ghastly Valley</option>
+              <option value="shadow">Shadow Forest</option>
+              <option value="underwater">Underwater Basin</option>
+              <option value="swamp">Putrid Swamp</option>
+              <option value="depths">Echoing Depths</option>
+              <option value="blood">Blood Cave</option>
+              <option value="custom">Custom Environment</option>
+            </select>
+            <p class="custom-environment-note">Build the route of the dungeon floor by floor. Each area begins on its chosen floor and keeps going until the next area starts.</p>
+            <div id="environmentStageList" class="environment-stage-list"></div>
+            <div class="custom-environment-library">
+              <div class="panel-heading">
+                <h4>Custom Areas</h4>
+                <span>Saved local themes for the builder</span>
+              </div>
+              <div id="customEnvironmentLibraryList" class="custom-environment-library-list"></div>
+              <p class="custom-environment-note">Custom environment images are saved locally and in full package exports/imports. Normal share codes still leave image data out.</p>
+            </div>
+          </section>
+
+          <label>
+            Camera
+            <select id="cameraMode">
+              <option value="center">Center On Player</option>
+              <option value="screen">Screen By Screen</option>
+            </select>
+          </label>
+
+          <div class="control-grid">
+            <label class="slider-control">
+              <span class="slider-title">Floors</span>
+              <input id="floors" type="range" min="1" max="99" value="8" title="How many floors the dungeon has. Example: 1 is a one-floor challenge, 8 is medium, 25 is a long run, and 99 is a full expedition." />
+              <output id="floorsOut">8</output>
+            </label>
+            <label class="slider-control">
+              <span class="slider-title">Rooms Per Floor</span>
+              <input id="roomCount" type="range" min="3" max="12" value="7" title="How many rooms each floor tries to generate. Example: 3 makes sparse floors, 7 is balanced, 10 or more feels dense and maze-like." />
+              <output id="roomCountOut">7</output>
+            </label>
+            <label class="slider-control">
+              <span class="slider-title">Monster Spawn</span>
+              <input id="monsterRate" type="range" min="2" max="18" value="8" title="How many monsters tend to appear per floor. Example: 2 to 4 is light pressure, 8 is moderate, 14 or more is crowded and dangerous." />
+              <output id="monsterRateOut">8</output>
+            </label>
+            <label class="slider-control">
+              <span class="slider-title">Monster Respawn</span>
+              <input id="monsterRespawnRate" type="range" min="0" max="10" value="3" title="How quickly defeated monsters are replaced. Example: 0 means no respawns, 3 is occasional replenishing, 8 to 10 keeps floors heavily repopulated." />
+              <output id="monsterRespawnRateOut">3</output>
+            </label>
+            <label class="slider-control">
+              <span class="slider-title">Difficulty</span>
+              <input id="difficulty" type="range" min="0" max="10" value="3" title="How quickly higher-level enemies begin appearing. Example: 0 keeps stronger monsters deeper in the dungeon, 3 is a normal ramp, and 8 to 10 makes dangerous variants appear much earlier." />
+              <output id="difficultyOut">3</output>
+            </label>
+            <label class="slider-control">
+              <span class="slider-title">Item Drop Rate</span>
+              <input id="itemRate" type="range" min="1" max="18" value="9" title="How many item drops tend to appear per floor. Example: 1 to 3 is scarce, 8 to 10 is comfortable, 14 or more is very generous." />
+              <output id="itemRateOut">9</output>
+            </label>
+            <label class="slider-control">
+              <span class="slider-title">Rare Loot</span>
+              <input id="rareRate" type="range" min="0" max="10" value="3" title="How likely higher-rarity loot is to appear. Example: 0 means mostly basic gear, 3 is occasional upgrades, 8 to 10 makes rare finds common." />
+              <output id="rareRateOut">3</output>
+            </label>
+            <label class="slider-control">
+              <span class="slider-title">Cursed Item Rate</span>
+              <input id="curseRate" type="range" min="0" max="100" value="15" title="How likely floor items are to spawn cursed. Example: 0 means no cursed loot, 15 means occasional curses, 50 or more makes cursed finds very common." />
+              <output id="curseRateOut">15</output>
+            </label>
+            <label class="slider-control">
+              <span class="slider-title">Blessed Item Rate</span>
+              <input id="blessedRate" type="range" min="0" max="100" value="12" title="How likely consumable floor items like grass, food, scrolls, and utility items are to spawn blessed. Example: 0 means none, 12 is occasional, 40 or more makes double-use finds common." />
+              <output id="blessedRateOut">12</output>
+            </label>
+            <label class="slider-control">
+              <span class="slider-title">Trap Density</span>
+              <input id="trapRate" type="range" min="0" max="12" value="3" title="How many traps tend to appear on each floor. Example: 0 means safe floors, 3 is occasional danger, 8 or more makes rooms feel trap-heavy." />
+              <output id="trapRateOut">3</output>
+            </label>
+            <label class="slider-control">
+              <span class="slider-title">Sigil Density</span>
+              <input id="sigilRate" type="range" min="0" max="12" value="2" title="How many beneficial sigils tend to appear on each floor. Example: 0 means none, 2 is occasional help, 6 or more makes floors feel support-heavy." />
+              <output id="sigilRateOut">2</output>
+            </label>
+            <label class="slider-control">
+              <span class="slider-title">Gold Bundle Size</span>
+              <input id="goldRate" type="range" min="0" max="100" value="20" title="How large random gold drops tend to be. Example: 0 is about 5 to 10 gold, 50 is a solid mid-sized pile, and 100 pushes bundles toward about 1500 gold." />
+              <output id="goldRateOut">20</output>
+            </label>
+            <label class="slider-control">
+              <span class="slider-title">Inventory Spaces</span>
+              <input id="inventoryLimit" type="range" min="3" max="30" value="12" title="How many items the player can carry. Example: 3 is very strict, 12 is comfortable, 20 or more makes runs much easier." />
+              <output id="inventoryLimitOut">12</output>
+            </label>
+            <label class="slider-control">
+              <span class="slider-title">Monster Limit</span>
+              <input id="monsterLimit" type="range" min="1" max="30" value="12" title="The maximum number of monsters allowed on a floor at once. Example: 3 keeps floors calm, 12 is busy, 20 or more can feel overwhelming." />
+              <output id="monsterLimitOut">12</output>
+            </label>
+          </div>
+
+          <label class="inline-check">
+            <input id="equippedCountsTowardLimit" type="checkbox" />
+            Equipped items count toward inventory limit
+          </label>
+
+          <label class="inline-check">
+            <input id="hungerEnabled" type="checkbox" />
+            Enable hunger
+          </label>
+
+          <div id="hungerControls" class="hidden">
+            <label class="slider-control">
+              <span class="slider-title">Moves Per Hunger Loss</span>
+              <input id="hungerDrainRate" type="range" min="1" max="20" value="5" title="How many player turns it takes to lose 1 hunger point when hunger is enabled. Example: 1 drains very fast, 5 is moderate, 10 or more is forgiving." />
+              <output id="hungerDrainRateOut">5</output>
+            </label>
+            <details class="hunger-heal-rules">
+              <summary>Don’t passively heal when</summary>
+              <div class="hunger-heal-rule-list">
+                <label class="inline-check">
+                  <input id="hungerNoHealItemAction" type="checkbox" />
+                  The player uses, places, or throws an item
+                </label>
+                <label class="inline-check">
+                  <input id="hungerNoHealAttackDamage" type="checkbox" />
+                  A player's attack damages an enemy
+                </label>
+                <label class="inline-check">
+                  <input id="hungerNoHealPickupExchange" type="checkbox" />
+                  The player picks up or exchanges an item under their foot
+                </label>
+              </div>
+            </details>
+          </div>
+
+          <label class="inline-check">
+            <input id="clearBuffsOnFloorChange" type="checkbox" />
+            Temporary buffs disappear on new floor
+          </label>
+
+          <label class="inline-check">
+            <input id="unidentifiedEnabled" type="checkbox" />
+            Enable unidentified items
+          </label>
+
+          <div id="unidentifiedControls" class="hidden">
+            <details class="unidentified-settings" open>
+              <summary>Unidentified Item Rules</summary>
+              <div class="unidentified-rule-list">
+                <label class="inline-check">
+                  <input id="deductionMode" type="checkbox" />
+                  Deduction mode
+                </label>
+                <p>Picked up items can possibly be 3 things, figure it out.</p>
+              </div>
+            </details>
+          </div>
+
+          <label class="inline-check">
+            <input id="hideGridlines" type="checkbox" />
+            Hide dungeon gridlines
+          </label>
+
+          <details class="starting-stats-settings">
+            <summary>Starting Stats</summary>
+            <div class="starting-stats-grid">
+              <label class="starting-stat-card">
+                HP
+                <input id="startHp" type="number" min="1" step="1" value="20" />
+              </label>
+              <label class="starting-stat-card">
+                Attack
+                <input id="startAttack" type="number" min="-99" step="1" value="2" />
+              </label>
+              <label class="starting-stat-card">
+                Defense
+                <input id="startDefense" type="number" min="-99" step="1" value="0" />
+              </label>
+              <label class="starting-stat-card">
+                Hit Accuracy
+                <input id="startAccuracy" type="number" min="0" max="100" step="1" value="100" />
+              </label>
+              <label class="starting-stat-card">
+                Gold
+                <input id="startGold" type="number" min="-99999" step="1" value="0" />
+              </label>
+            </div>
+          </details>
+
+          <details class="leveling-settings">
+            <summary>Leveling</summary>
+            <div class="leveling-body">
+              <label class="inline-check">
+                <input id="levelingEnabled" type="checkbox" />
+                Enable leveling
+              </label>
+              <div id="levelingControls" class="leveling-controls hidden">
+                <div class="leveling-table-wrap">
+                  <table class="leveling-table">
+                    <thead>
+                      <tr>
+                        <th>Level</th>
+                        <th>XP Needed</th>
+                      </tr>
+                    </thead>
+                    <tbody id="levelingTableBody"></tbody>
+                  </table>
+                </div>
+                <div class="leveling-growth">
+                  <h3>Level Up Stat Changes</h3>
+                  <div class="leveling-growth-list">
+                    <label class="leveling-growth-row">
+                      <span class="inline-check"><input id="levelHpEnabled" type="checkbox" /> Max HP</span>
+                      <input id="levelHpValue" type="number" step="1" value="2" />
+                    </label>
+                    <label class="leveling-growth-row">
+                      <span class="inline-check"><input id="levelAttackEnabled" type="checkbox" /> Attack</span>
+                      <input id="levelAttackValue" type="number" step="1" value="1" />
+                    </label>
+                    <label class="leveling-growth-row">
+                      <span class="inline-check"><input id="levelDefenseEnabled" type="checkbox" /> Defense</span>
+                      <input id="levelDefenseValue" type="number" step="1" value="1" />
+                    </label>
+                    <label class="leveling-growth-row">
+                      <span class="inline-check"><input id="levelAccuracyEnabled" type="checkbox" /> Hit Accuracy</span>
+                      <input id="levelAccuracyValue" type="number" step="1" value="1" />
+                    </label>
+                    <label class="leveling-growth-row">
+                      <span class="inline-check"><input id="levelHungerEnabled" type="checkbox" /> Max Hunger</span>
+                      <input id="levelHungerValue" type="number" step="1" value="5" />
+                    </label>
+                    <label class="leveling-growth-row">
+                      <span class="inline-check"><input id="levelGoldEnabled" type="checkbox" /> Gold</span>
+                      <input id="levelGoldValue" type="number" step="1" value="0" />
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <details class="rarity-settings">
+            <summary>Weapon Rarity</summary>
+            <div class="rarity-settings-body">
+              <div class="panel-heading">
+                <h2>Weapon Rarity</h2>
+                <label class="inline-check">
+                  <input id="weaponRarityEnabled" type="checkbox" checked />
+                  Allow Weapon Rarity
+                </label>
+              </div>
+              <div class="rarity-actions">
+                <button id="rarityAddButton" type="button">+ Add Rarity</button>
+              </div>
+              <div id="rarityList" class="rarity-grid"></div>
+              <p class="rarity-help">
+                Built-in rarities stay available, and you can add as many extra rarity tiers as you want. Higher multipliers tend to be treated as rarer tiers, and rarities can also grant bonus random runes to spawned weapons and shields.
+              </p>
+              <div class="rarity-effects-help">
+                Effects: None, Pulse, Phase, Fog, Shimmer, Surge, Flicker, Bloom
+              </div>
+            </div>
+          </details>
+
+          <details class="starting-equipment-settings">
+            <summary>Starting Equipment</summary>
+            <div class="starting-equipment-grid">
+              <div class="starting-slot-card">
+                <label>
+                  Left Hand
+                  <select id="startLeftHand" data-starting-slot="leftHand"></select>
+                </label>
+                <label>
+                  Rarity
+                  <select id="startLeftHandRarity"></select>
+                </label>
+                <label class="inline-check">
+                  <input id="startLeftHandCursed" type="checkbox" />
+                  Cursed
+                </label>
+              </div>
+              <div class="starting-slot-card">
+                <label>
+                  Right Hand
+                  <select id="startRightHand" data-starting-slot="rightHand"></select>
+                </label>
+                <label>
+                  Rarity
+                  <select id="startRightHandRarity"></select>
+                </label>
+                <label class="inline-check">
+                  <input id="startRightHandCursed" type="checkbox" />
+                  Cursed
+                </label>
+              </div>
+              <div class="starting-slot-card">
+                <label>
+                  Bracelet 1
+                  <select id="startBracelet1" data-starting-slot="bracelet1"></select>
+                </label>
+                <label class="inline-check">
+                  <input id="startBracelet1Cursed" type="checkbox" />
+                  Cursed
+                </label>
+              </div>
+              <div class="starting-slot-card">
+                <label>
+                  Bracelet 2
+                  <select id="startBracelet2" data-starting-slot="bracelet2"></select>
+                </label>
+                <label class="inline-check">
+                  <input id="startBracelet2Cursed" type="checkbox" />
+                  Cursed
+                </label>
+              </div>
+            </div>
+          </details>
+
+          <details class="starting-inventory-settings">
+            <summary>Starting Inventory</summary>
+            <div id="startingInventoryList" class="starting-inventory-grid"></div>
+          </details>
+
+          <details class="environmental-effects" aria-label="Environmental effect settings">
+            <summary>
+              <span>Environmental Effects</span>
+              <span>Random per floor</span>
+            </summary>
+            <div id="environmentalEffectsList" class="effect-list">
+              <div class="effect-row" data-effect="noPickup">
+                <strong>Unable to Pick Up Items</strong>
+                <label><input type="checkbox" data-target="player" checked /> Effect Player</label>
+                <label><input type="checkbox" data-target="enemy" /> Effect Enemy</label>
+              </div>
+              <div class="effect-row" data-effect="doubleDamage">
+                <strong>Damage Is Doubled</strong>
+                <label><input type="checkbox" data-target="player" checked /> Effect Player</label>
+                <label><input type="checkbox" data-target="enemy" checked /> Effect Enemy</label>
+              </div>
+              <div class="effect-row" data-effect="halfDamage">
+                <strong>Damage Is Halved</strong>
+                <label><input type="checkbox" data-target="player" checked /> Effect Player</label>
+                <label><input type="checkbox" data-target="enemy" checked /> Effect Enemy</label>
+              </div>
+              <div class="effect-row effect-row-timed" data-effect="randomWarp">
+                <strong>Random Warp</strong>
+                <label>
+                  <input type="checkbox" data-target="player" />
+                  Effect Player
+                  <input type="number" data-target="playerTurns" min="1" max="99" step="1" value="5" />
+                  turns
+                </label>
+                <label>
+                  <input type="checkbox" data-target="enemy" />
+                  Effect Enemy
+                  <input type="number" data-target="enemyTurns" min="1" max="99" step="1" value="5" />
+                  turns
+                </label>
+              </div>
+              <div class="effect-row effect-row-timed" data-effect="randomItemDrop">
+                <strong>Random Item Drop</strong>
+                <label>
+                  <input type="checkbox" data-target="player" />
+                  Effect Player
+                  <input type="number" data-target="playerTurns" min="1" max="99" step="1" value="5" />
+                  turns
+                </label>
+              </div>
+              <div class="effect-row effect-row-conditional" data-effect="conditionalItemUse">
+                <strong>Conditional Item Use (not working yet)</strong>
+                <label><input type="checkbox" data-target="player" checked /> Effect Player</label>
+                <label><input type="checkbox" data-target="enemy" /> Effect Enemy</label>
+                <label>
+                  If
+                  <select data-target="itemTrigger"></select>
+                </label>
+                <label>
+                  Then
+                  <select data-target="conditionType"></select>
+                </label>
+                <div class="conditional-effect-value"></div>
+              </div>
+            </div>
+          </details>
+
+          <details class="special-room-settings" aria-label="Special room settings">
+            <summary>
+              <span>Special Rooms</span>
+              <span>Room events</span>
+            </summary>
+            <div id="specialRoomList" class="special-room-list"></div>
+          </details>
+
+          <details class="run-log-settings" aria-label="Run log settings">
+            <summary>
+              <span>Run Log</span>
+              <span>Log styling</span>
+            </summary>
+            <div class="run-log-body">
+              <label class="inline-check">
+                <input id="runLogShowNumbers" type="checkbox" checked />
+                Have numbers denote run log
+              </label>
+              <label class="inline-check">
+                <input id="runLogHighlightDamage" type="checkbox" checked />
+                Highlight damage numbers
+              </label>
+              <label class="inline-check">
+                <input id="runLogHighlightEnemies" type="checkbox" checked />
+                Highlight enemy names
+              </label>
+              <label class="inline-check">
+                <input id="runLogShowItemIcons" type="checkbox" checked />
+                Show item icons next to item names
+              </label>
+              <label class="inline-check">
+                <input id="runLogShowTurnDividers" type="checkbox" checked />
+                Show turn dividers
+              </label>
+            </div>
+          </details>
+
+          <details class="custom-goal-settings" aria-label="Custom goal settings">
+            <summary>
+              <span>Custom Goal</span>
+              <span>Win condition</span>
+            </summary>
+            <div class="goal-fields">
+              <label>
+                Template
+                <select id="goalType">
+                  <option value="escape">Escape</option>
+                  <option value="kill">Kill</option>
+                  <option value="obtain">Obtain</option>
+                  <option value="gold">Earn Gold</option>
+                </select>
+              </label>
+              <label id="goalCountWrap">
+                <span id="goalCountLabel">Enemies Required</span>
+                <input id="goalCount" type="number" min="1" step="1" value="8" />
+              </label>
+              <label id="goalTargetWrap">
+                <span id="goalTargetLabel">Target Enemy</span>
+                <select id="goalTarget"></select>
+              </label>
+              <label id="goalNeedExitWrap" class="inline-check">
+                <input id="goalNeedExit" type="checkbox" />
+                Need to reach the exit after the goal is complete
+              </label>
+            </div>
+          </details>
+
+          <section class="item-pool-settings" aria-label="Item pool settings">
+            <div class="panel-heading">
+              <h2>Item Pool</h2>
+              <span>Spawn rules</span>
+            </div>
+            <div class="pool-frame">
+              <div id="itemPoolList" class="item-pool-list"></div>
+            </div>
+            <details class="rune-pool-settings">
+              <summary>
+                <span>Runes</span>
+              </summary>
+              <div class="rune-pool-body">
+                <div class="panel-heading">
+                  <h2>Runes</h2>
+                  <label class="inline-check">
+                    <input id="runeEnableAll" type="checkbox" />
+                    Enable All
+                  </label>
+                  <button id="runeAddButton" type="button">+ Add Rune</button>
+                </div>
+                <div id="runePoolList" class="rune-pool-list"></div>
+              </div>
+            </details>
+            <details class="special-attack-settings">
+              <summary>
+                <span>Special Attacks</span>
+                <span>Player skill patterns</span>
+              </summary>
+              <div class="special-attack-body">
+                <div class="panel-heading">
+                  <h2>Special Attacks</h2>
+                  <label class="inline-check">
+                    <input id="specialAttackEnableAll" type="checkbox" />
+                    Enable All
+                  </label>
+                  <button id="specialAttackAddButton" type="button">+ Add Special Attack</button>
+                </div>
+                <div id="specialAttackList" class="special-attack-list"></div>
+              </div>
+            </details>
+          </section>
+
+          <details class="trap-pool-settings" aria-label="Trap pool settings">
+            <summary>
+              <span>Trap Pool</span>
+            </summary>
+            <div class="trap-pool-body">
+              <div class="panel-heading">
+                <h2>Trap Pool</h2>
+                <label class="inline-check">
+                  <input id="trapEnableAll" type="checkbox" />
+                  Enable All
+                </label>
+                <button id="trapAddButton" type="button">+ Add Trap</button>
+              </div>
+              <label class="inline-check">
+                <input id="trapsVisibleEnabled" type="checkbox" />
+                Make Traps Visible
+              </label>
+              <div id="trapPoolList" class="trap-pool-list"></div>
+            </div>
+          </details>
+
+          <details class="sigil-pool-settings" aria-label="Sigil pool settings">
+            <summary>
+              <span>Sigil Pool</span>
+              <span>Blessing tiles</span>
+            </summary>
+            <div class="sigil-pool-body">
+              <div class="panel-heading">
+                <h2>Sigil Pool</h2>
+                <label class="inline-check">
+                  <input id="sigilEnableAll" type="checkbox" />
+                  Enable All
+                </label>
+                <button id="sigilAddButton" type="button">+ Add Sigil</button>
+              </div>
+              <label class="inline-check">
+                <input id="sigilsVisibleEnabled" type="checkbox" />
+                Make Sigils Visible
+              </label>
+              <div id="sigilPoolList" class="sigil-pool-list"></div>
+            </div>
+          </details>
+
+          <section class="enemy-pool-settings" aria-label="Enemy pool settings">
+            <div class="panel-heading">
+              <h2>Enemy Pool</h2>
+              <button id="enemyAddButton" type="button">+ Add Family</button>
+            </div>
+            <div class="pool-frame">
+              <div id="enemyPoolList" class="enemy-pool-list"></div>
+            </div>
+            <div class="enemy-drop-controls">
+              <label class="inline-check">
+                <input id="enemyDropsEnabled" type="checkbox" />
+                Enemy drops upon death
+              </label>
+              <details id="enemyDropDetails" class="enemy-drop-details hidden">
+                <summary>
+                  <span>Enemy Drop Rules</span>
+                  <span>Loot chance</span>
+                </summary>
+                <div class="enemy-drop-body">
+                  <div class="enemy-drop-fields">
+                    <label>
+                      Drop %
+                      <input id="enemyDropChance" type="number" min="0" max="100" step="1" value="35" />
+                    </label>
+                    <label>
+                      Weapon/Shield Rare %
+                      <input id="enemyDropRarityChance" type="number" min="0" max="100" step="1" value="20" />
+                    </label>
+                  </div>
+                  <div id="enemyDropCategories" class="enemy-drop-categories hidden"></div>
+                </div>
+              </details>
+            </div>
+          </section>
+
+          <details class="enemy-type-settings" aria-label="Enemy type settings">
+            <summary>
+              <span>Enemy Types</span>
+              <span>Family classifications</span>
+            </summary>
+            <div class="enemy-type-body">
+              <div class="panel-heading">
+                <span>Create named groups of enemy families for rune targeting.</span>
+                <button id="enemyTypeAddButton" type="button">+ Add Type</button>
+              </div>
+              <div id="enemyTypeList" class="enemy-type-list"></div>
+            </div>
+          </details>
+
+          <details class="boss-room-settings" aria-label="Boss room settings">
+            <summary>
+              <span>Boss Room</span>
+              <span>Final encounter setup</span>
+            </summary>
+            <div class="boss-room-body">
+              <label class="inline-check">
+                <input id="bossRoomEnabled" type="checkbox" />
+                Enable boss room
+              </label>
+              <div id="bossRoomControls" class="boss-room-controls hidden">
+                <div class="boss-room-grid">
+                  <label>
+                    Boss Name
+                    <input id="bossName" type="text" maxlength="40" value="Dungeon Boss" />
+                  </label>
+                  <label>
+                    Boss Size
+                    <select id="bossSize">
+                      <option value="2x2">2x2</option>
+                      <option value="3x3">3x3</option>
+                    </select>
+                  </label>
+                  <label>
+                    Boss Attack
+                    <input id="bossAttack" type="number" min="0" step="1" value="12" />
+                  </label>
+                  <label>
+                    Room Shape
+                    <select id="bossRoomShape">
+                      <option value="square">Square</option>
+                      <option value="circle">Circle</option>
+                      <option value="triangle">Triangle</option>
+                      <option value="pentagon">Pentagon</option>
+                      <option value="hexagon">Hexagon</option>
+                      <option value="octagon">Octagon</option>
+                      <option value="diamond">Diamond</option>
+                    </select>
+                  </label>
+                  <label>
+                    Room Width
+                    <input id="bossRoomWidth" type="number" min="3" max="31" step="1" value="9" />
+                  </label>
+                  <label>
+                    Room Height
+                    <input id="bossRoomHeight" type="number" min="3" max="31" step="1" value="9" />
+                  </label>
+                  <label class="slider-control">
+                    <span class="slider-title">Boss Behavior</span>
+                    <input id="bossBehavior" type="range" min="0" max="10" value="3" title="How aggressively the boss pursues the player and leans on special attacks. Example: 0 keeps the boss passive and basic-attack focused, 5 is balanced pressure, and 10 is relentless and special-heavy." />
+                    <output id="bossBehaviorOut">3</output>
+                  </label>
+                </div>
+                <div class="boss-attack-section">
+                  <div class="panel-heading">
+                    <h2>Special Attacks</h2>
+                    <button id="bossAttackAddButton" type="button">+ Add Special Attack</button>
+                  </div>
+                  <div id="bossAttackList" class="boss-attack-list"></div>
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <section class="sound-pack-settings plain-section" aria-label="Custom sound effect settings">
+            <div class="sound-pack-body">
+              <div class="panel-heading">
+                <h2>Sound Effects</h2>
+                <span>Package and share local action sounds</span>
+              </div>
+              <select id="soundPackMode" aria-label="Sound mode">
+                <option value="default">Default Sounds</option>
+                <option value="custom">Custom Sounds</option>
+              </select>
+              <p id="soundPackNote" class="sound-pack-note">Default mode auto-matches local sounds from the audio folder. Custom uploads are saved in full package exports and local saves, but not normal share codes.</p>
+              <div id="soundPackCustomControls" class="sound-pack-custom-controls hidden">
+                <div id="soundEffectList" class="sound-effect-list"></div>
+              </div>
+            </div>
+          </section>
+        </aside>
+
+        <button id="showRecipeButton" type="button" class="show-recipe-tab hidden">Recipe</button>
+        <button id="showGameButton" type="button" class="show-game-tab hidden">Game</button>
+
+        <section class="game-wrap">
+          <div class="play-column">
+            <div class="board-stage">
+              <div id="board" class="board" aria-label="Dungeon map"></div>
+              <div id="endScreen" class="end-screen hidden" aria-live="polite">
+                <div class="end-screen-card">
+                  <h2 id="endScreenTitle">You Won</h2>
+                  <p id="endScreenSubtitle">Run summary</p>
+                  <div id="endScreenStats" class="end-screen-stats"></div>
+                  <div class="end-screen-actions">
+                    <p>Choose whether to retry this dungeon or roll a fresh surprise run.</p>
+                    <div class="end-screen-action-row">
+                      <button id="endScreenReplayButton" type="button">Replay Same Dungeon</button>
+                      <button id="endScreenSurpriseButton" type="button" class="primary">Surprise Me And Start</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="panel hud">
+              <div>
+                <span>HP</span>
+                <strong id="hpLabel">20 / 20</strong>
+              </div>
+              <div>
+                <span>Attack</span>
+                <strong id="attackLabel">4</strong>
+              </div>
+              <div>
+                <span>Defense</span>
+                <strong id="defenseLabel">1</strong>
+              </div>
+              <div>
+                <span>Gold</span>
+                <strong id="goldLabel">0</strong>
+              </div>
+              <div id="levelHud" class="hidden">
+                <span>Level</span>
+                <strong id="levelLabel">1</strong>
+              </div>
+              <div id="xpHud" class="hidden">
+                <span>XP</span>
+                <strong id="xpLabel">0 / 10</strong>
+              </div>
+              <div>
+                <span>Floor</span>
+                <strong id="floorHudLabel">1 / 8</strong>
+              </div>
+              <div id="hungerHud" class="hidden">
+                <span>Hunger</span>
+                <strong id="hungerLabel">100 / 100</strong>
+              </div>
+              <div>
+                <span>Floor Effect</span>
+                <strong id="floorEffectLabel">None</strong>
+              </div>
+              <div>
+                <span>Goal</span>
+                <strong id="goalLabel">Reach the stairs. 1 herb, 2 leaf, 3 root.</strong>
+              </div>
+            </div>
+
+            <div class="panel log-panel">
+              <h2>Run Log</h2>
+              <ol id="log"></ol>
+            </div>
+          </div>
+
+          <section id="inventoryMenu" class="panel inventory-menu" aria-label="Inventory and equipment menu">
+            <div class="inventory-layout">
+              <div>
+                <h3>Equipped</h3>
+                <div id="equipmentList" class="item-list"></div>
+              </div>
+              <div id="floorItemSection" class="hidden">
+                <h3>Floor</h3>
+                <div id="floorItemList" class="item-list"></div>
+              </div>
+              <div id="shopSellSection" class="hidden">
+                <h3>Sell</h3>
+                <div id="shopSellList" class="item-list"></div>
+              </div>
+              <div id="gamblingSection" class="hidden">
+                <h3>Gamble</h3>
+                <div id="gamblingList" class="item-list"></div>
+              </div>
+              <div id="upgradeChoiceSection" class="hidden">
+                <h3>Upgrade</h3>
+                <div id="upgradeChoiceList" class="item-list"></div>
+              </div>
+              <div id="stringActionSection" class="hidden">
+                <h3>String</h3>
+                <div id="stringActionList" class="item-list"></div>
+              </div>
+              <div>
+                <div class="inventory-heading">
+                  <div class="inventory-heading-main">
+                    <h3>Inventory</h3>
+                    <span id="inventoryCountLabel" class="inventory-count">0 / 12</span>
+                  </div>
+                  <button id="inventorySortButton" type="button">Sort</button>
+                </div>
+                <div id="inventoryList" class="item-list"></div>
+              </div>
+            </div>
+            <p class="menu-help">Equipping, using, casting, or dropping an item takes a turn. Gold is collected instantly when picked up.</p>
+          </section>
+        </section>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>

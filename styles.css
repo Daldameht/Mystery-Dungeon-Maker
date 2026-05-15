@@ -1,0 +1,3429 @@
+:root {
+  --bg: #1b1a16;
+  --panel: #26241d;
+  --panel-strong: #312f26;
+  --text: #efe7d3;
+  --muted: #b3a78a;
+  --gold: #c99a3a;
+  --green: #7b9865;
+  --red: #b76a59;
+  --blue: #7296a7;
+  --tile: #3a382c;
+  --wall: #11100d;
+  --shadow: rgba(0, 0, 0, 0.18);
+  color-scheme: dark;
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  color: var(--text);
+  background: var(--bg);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  border: 1px solid rgba(245, 236, 210, 0.2);
+  border-radius: 0.2rem;
+  padding: 0.7rem 1rem;
+  color: var(--text);
+  background: #3a372d;
+  cursor: pointer;
+  transition: border-color 150ms ease, background 150ms ease;
+}
+
+button:hover {
+  border-color: rgba(201, 154, 58, 0.7);
+  background: #444036;
+}
+
+button.primary {
+  color: #191712;
+  border-color: #b68a31;
+  background: #d3a646;
+  font-weight: 700;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  border: 1px solid rgba(245, 236, 210, 0.18);
+  border-radius: 0.2rem;
+  padding: 0.7rem;
+  color: var(--text);
+  background: #171611;
+}
+
+input[type="range"] {
+  accent-color: var(--gold);
+  padding: 0;
+}
+
+textarea {
+  min-height: 6rem;
+  resize: vertical;
+  font-family: "Courier New", monospace;
+  font-size: 0.85rem;
+}
+
+label {
+  display: grid;
+  gap: 0.4rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.inline-check {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.inline-check input {
+  width: auto;
+}
+
+output {
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.slider-control {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 0.6rem;
+  row-gap: 0.3rem;
+}
+
+.slider-title {
+  min-width: 0;
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.slider-control input[type="range"] {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  width: 100%;
+}
+
+.slider-control output {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+  text-align: right;
+  min-width: 2ch;
+}
+
+.app-shell {
+  width: min(1920px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 1.25rem 0;
+}
+
+.hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.hero-copy {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.title-row {
+  display: flex;
+  align-items: end;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.eyebrow {
+  margin: 0 0 0.3rem;
+  color: var(--gold);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  max-width: none;
+  margin-bottom: 0;
+  font-size: clamp(1.5rem, 3.5vw, 3.25rem);
+  line-height: 0.95;
+  letter-spacing: -0.045em;
+}
+
+h2 {
+  margin-bottom: 0;
+  font-size: 1.15rem;
+}
+
+.lede {
+  max-width: 48rem;
+  margin-bottom: 0;
+  color: var(--muted);
+  font-size: 1.08rem;
+  line-height: 1.5;
+}
+
+.run-card,
+.panel {
+  border: 1px solid rgba(245, 236, 210, 0.13);
+  border-radius: 0.2rem;
+  background: var(--panel);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.run-card {
+  display: grid;
+  gap: 0.35rem;
+  min-width: min(100%, 20rem);
+  padding: 1rem;
+}
+
+.run-card.hidden {
+  display: none !important;
+}
+
+.run-card span,
+.hud span {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(540px, 700px) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.panel {
+  padding: 1rem;
+}
+
+.creator-panel {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+  position: sticky;
+  top: 1rem;
+}
+
+#hideRecipeButton {
+  min-width: 8rem;
+}
+
+.show-recipe-tab,
+.show-game-tab {
+  display: none;
+  position: sticky;
+  top: 1rem;
+  align-self: start;
+  padding: 0.75rem 0.8rem;
+  border-radius: 0.2rem;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+
+.panel-heading,
+.button-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+}
+
+.control-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.9rem;
+}
+
+.recipe-action-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+}
+
+.recipe-action-grid button {
+  width: 100%;
+}
+
+.package-action-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+}
+
+.package-action-row button {
+  width: 100%;
+}
+
+.rarity-settings {
+  border: 1px solid rgba(245, 236, 210, 0.12);
+  border-radius: 0.95rem;
+  padding: 0;
+  background: rgba(15, 16, 11, 0.45);
+  overflow: hidden;
+}
+
+.rarity-settings summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+  padding: 0.75rem;
+  color: var(--gold);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.rarity-settings-body {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.85rem;
+}
+
+.rarity-settings .panel-heading {
+  align-items: start;
+}
+
+.rarity-settings .panel-heading h2 {
+  font-size: 1rem;
+}
+
+.rarity-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.65rem;
+}
+
+.rarity-card {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.65rem;
+  border: 1px solid rgba(245, 236, 210, 0.12);
+  border-radius: 0.95rem;
+  background: rgba(36, 37, 25, 0.72);
+}
+
+.rarity-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.rarity-card strong {
+  color: var(--text);
+}
+
+.rarity-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.rarity-card-fields {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.rarity-card input[type="color"] {
+  min-height: 2.6rem;
+  padding: 0.25rem;
+}
+
+.rarity-remove {
+  justify-self: end;
+}
+
+.rarity-help,
+.rarity-effects-help {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.game-wrap {
+  display: grid;
+  grid-template-columns: minmax(560px, 1fr) minmax(300px, 420px);
+  gap: 1rem;
+  align-items: start;
+}
+
+.play-column {
+  display: grid;
+  gap: 1rem;
+}
+
+.board-stage {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.35rem;
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(28, minmax(18px, 1fr));
+  gap: 3px;
+  padding: 1rem;
+  border: 1px solid rgba(245, 236, 210, 0.13);
+  border-radius: 1.35rem;
+  background: rgba(15, 16, 11, 0.78);
+  box-shadow: inset 0 0 4rem rgba(0, 0, 0, 0.28), 0 1.5rem 3.5rem var(--shadow);
+}
+
+.end-screen {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  border-radius: 1.35rem;
+  background: rgba(7, 8, 5, 0.8);
+  backdrop-filter: blur(8px);
+  overflow: hidden;
+  z-index: 3;
+}
+
+.boss-glyph-overlay {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  z-index: 2;
+  color: #ffd1ca;
+  font-weight: 900;
+  line-height: 1;
+  text-transform: uppercase;
+  text-shadow:
+    0 0 18px rgba(255, 209, 202, 0.28),
+    0 2px 0 rgba(0, 0, 0, 0.45);
+}
+
+.end-screen-card {
+  width: min(100%, 42rem);
+  max-width: 100%;
+  max-height: 100%;
+  display: grid;
+  gap: 1rem;
+  padding: 1.2rem;
+  border: 1px solid rgba(245, 236, 210, 0.15);
+  border-radius: 1.2rem;
+  background: rgba(36, 37, 25, 0.96);
+  box-shadow: 0 1.5rem 3.5rem var(--shadow);
+  overflow-y: auto;
+}
+
+.end-screen-card h2 {
+  margin: 0;
+  color: var(--gold);
+  font-size: clamp(1.6rem, 4vw, 2.6rem);
+}
+
+.end-screen-card p {
+  margin: 0;
+}
+
+.end-screen-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.end-screen-stat {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.7rem;
+  border: 1px solid rgba(245, 236, 210, 0.1);
+  border-radius: 0.9rem;
+  background: rgba(15, 16, 11, 0.45);
+}
+
+.end-screen-stat span {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.end-screen-actions {
+  display: grid;
+  gap: 0.7rem;
+  justify-items: center;
+  padding-top: 0.3rem;
+}
+
+.end-screen-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.65rem;
+}
+
+.board.no-grid {
+  gap: 0;
+  background: transparent;
+  isolation: isolate;
+}
+
+.tile {
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  position: relative;
+  overflow: hidden;
+  background: var(--tile);
+  color: var(--text);
+  font-size: clamp(0.85rem, 1.8vw, 1.4rem);
+  line-height: 1;
+}
+
+.tile.unknown {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.025), transparent 45%),
+    #070805;
+  color: transparent;
+}
+
+.tile.explored {
+  opacity: 0.42;
+  filter: saturate(0.45);
+}
+
+.board[data-environment="ruins"] .tile.explored {
+  opacity: 1;
+  filter: none;
+}
+
+.board[data-environment="ember"] .tile.explored {
+  opacity: 1;
+  filter: none;
+}
+
+.board[data-environment="fungal"] .tile.explored {
+  opacity: 1;
+  filter: none;
+}
+
+.board[data-environment="frost"] .tile.explored {
+  opacity: 1;
+  filter: none;
+}
+
+.board[data-environment="cosmic"] .tile.explored {
+  opacity: 1;
+  filter: none;
+}
+
+.board[data-environment="beach"] .tile.explored {
+  opacity: 1;
+  filter: none;
+}
+
+.board[data-environment="ghastly"] .tile.explored {
+  opacity: 1;
+  filter: none;
+}
+
+.board[data-environment="shadow"] .tile.explored {
+  opacity: 1;
+  filter: none;
+}
+
+.board[data-environment="underwater"] .tile.explored {
+  opacity: 1;
+  filter: none;
+}
+
+.board[data-environment="swamp"] .tile.explored {
+  opacity: 1;
+  filter: none;
+}
+
+.board[data-environment="depths"] .tile.explored {
+  opacity: 1;
+  filter: none;
+}
+
+.board[data-environment="blood"] .tile.explored {
+  opacity: 1;
+  filter: none;
+}
+
+.board.no-grid .tile.explored {
+  opacity: 1;
+  filter: saturate(0.45) brightness(0.42);
+}
+
+.board[data-environment="ruins"].no-grid .tile.explored {
+  opacity: 1;
+  filter: none;
+}
+
+.board[data-environment="ember"].no-grid .tile.explored {
+  opacity: 1;
+  filter: none;
+}
+
+.board[data-environment="fungal"].no-grid .tile.explored {
+  opacity: 1;
+  filter: none;
+}
+
+.board[data-environment="frost"].no-grid .tile.explored {
+  opacity: 1;
+  filter: none;
+}
+
+.board[data-environment="cosmic"].no-grid .tile.explored {
+  opacity: 1;
+  filter: none;
+}
+
+.board[data-environment="beach"].no-grid .tile.explored {
+  opacity: 1;
+  filter: none;
+}
+
+.board[data-environment="ghastly"].no-grid .tile.explored {
+  opacity: 1;
+  filter: none;
+}
+
+.board[data-environment="shadow"].no-grid .tile.explored {
+  opacity: 1;
+  filter: none;
+}
+
+.board[data-environment="underwater"].no-grid .tile.explored {
+  opacity: 1;
+  filter: none;
+}
+
+.board[data-environment="swamp"].no-grid .tile.explored {
+  opacity: 1;
+  filter: none;
+}
+
+.board[data-environment="depths"].no-grid .tile.explored {
+  opacity: 1;
+  filter: none;
+}
+
+.board[data-environment="blood"].no-grid .tile.explored {
+  opacity: 1;
+  filter: none;
+}
+
+.board[data-environment="ruins"] .tile.visible {
+  box-shadow: none;
+}
+
+.board[data-environment="ember"] .tile.visible {
+  box-shadow: none;
+}
+
+.board[data-environment="fungal"] .tile.visible {
+  box-shadow: none;
+}
+
+.board[data-environment="frost"] .tile.visible {
+  box-shadow: none;
+}
+
+.board[data-environment="cosmic"] .tile.visible {
+  box-shadow: none;
+}
+
+.board[data-environment="beach"] .tile.visible {
+  box-shadow: none;
+}
+
+.board[data-environment="ghastly"] .tile.visible {
+  box-shadow: none;
+}
+
+.board[data-environment="shadow"] .tile.visible {
+  box-shadow: none;
+}
+
+.board[data-environment="underwater"] .tile.visible {
+  box-shadow: none;
+}
+
+.board[data-environment="swamp"] .tile.visible {
+  box-shadow: none;
+}
+
+.board[data-environment="depths"] .tile.visible {
+  box-shadow: none;
+}
+
+.board[data-environment="blood"] .tile.visible {
+  box-shadow: none;
+}
+
+.board[data-environment="custom"] .tile.explored {
+  opacity: 1;
+  filter: none;
+}
+
+.board[data-environment="custom"].no-grid .tile.explored {
+  opacity: 1;
+  filter: none;
+}
+
+.board[data-environment="custom"] .tile.visible {
+  box-shadow: none;
+}
+
+.tile.visible {
+  box-shadow: inset 0 0 0.7rem rgba(244, 185, 66, 0.08);
+}
+
+.board.no-grid .tile.visible {
+  box-shadow: none;
+}
+
+.board.no-grid .tile {
+  margin: -0.5px;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.tile.edge-top {
+  border-top: 3px solid rgba(255, 255, 255, 0.92);
+}
+
+.tile.edge-right {
+  border-right: 3px solid rgba(255, 255, 255, 0.92);
+}
+
+.tile.edge-bottom {
+  border-bottom: 3px solid rgba(255, 255, 255, 0.92);
+}
+
+.tile.edge-left {
+  border-left: 3px solid rgba(255, 255, 255, 0.92);
+}
+
+.tile.wall {
+  background: var(--wall);
+}
+
+.board[data-environment="ruins"] .tile.unknown,
+.board[data-environment="ruins"] .tile.wall {
+  background-image: url("./env/ancient ruins/bg.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.board[data-environment="ruins"] .tile.unknown {
+  color: transparent;
+}
+
+.board[data-environment="ember"] .tile.unknown,
+.board[data-environment="ember"] .tile.wall {
+  background-image: url("./env/ember vault/bg.gif");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.board[data-environment="ember"] .tile.unknown {
+  color: transparent;
+}
+
+.board[data-environment="fungal"] .tile.unknown,
+.board[data-environment="fungal"] .tile.wall {
+  background-image:
+    radial-gradient(circle at 28% 32%, rgba(220, 146, 255, 0.2) 0 10%, transparent 11% 100%),
+    radial-gradient(circle at 70% 68%, rgba(179, 110, 240, 0.16) 0 8%, transparent 9% 100%),
+    linear-gradient(180deg, rgba(84, 29, 112, 0.66), rgba(50, 16, 74, 0.72)),
+    url("./env/fungal grotto/bg.png");
+  background-size: 155% 155%, 140% 140%, cover, cover;
+  background-position: 0% 0%, 100% 100%, center, center;
+  background-repeat: repeat, repeat, no-repeat, no-repeat;
+}
+
+.board[data-environment="fungal"] .tile.unknown {
+  color: transparent;
+}
+
+.board[data-environment="frost"] .tile.unknown,
+.board[data-environment="frost"] .tile.wall {
+  background-image:
+    radial-gradient(ellipse at 22% 28%, rgba(255, 255, 255, 0.2) 0 18%, transparent 42%),
+    radial-gradient(ellipse at 76% 62%, rgba(220, 240, 255, 0.16) 0 16%, transparent 38%),
+    radial-gradient(ellipse at 48% 82%, rgba(244, 249, 255, 0.12) 0 12%, transparent 34%),
+    linear-gradient(180deg, rgba(212, 231, 245, 0.26), rgba(195, 219, 238, 0.3)),
+    url("./env/frost archive/bg.jpg");
+  background-size: 190% 190%, 180% 180%, 175% 175%, cover, cover;
+  background-position: 0% 18%, 100% 82%, 40% 100%, center, center;
+  background-repeat: repeat, repeat, repeat, no-repeat, no-repeat;
+}
+
+.board[data-environment="frost"] .tile.unknown {
+  color: transparent;
+}
+
+.board[data-environment="cosmic"] .tile.unknown,
+.board[data-environment="cosmic"] .tile.wall {
+  background-image: url("./env/cosmic escape/bg.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.board[data-environment="cosmic"] .tile.unknown {
+  color: transparent;
+}
+
+.board[data-environment="beach"] .tile.unknown,
+.board[data-environment="beach"] .tile.wall {
+  background-image: url("./env/dashing beach/bg.gif");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.board[data-environment="beach"] .tile.unknown {
+  color: transparent;
+}
+
+.board[data-environment="ghastly"] .tile.unknown,
+.board[data-environment="ghastly"] .tile.wall {
+  background-image: url("./env/ghastly valley/bg.gif");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.board[data-environment="ghastly"] .tile.unknown {
+  color: transparent;
+}
+
+.board[data-environment="shadow"] .tile.unknown,
+.board[data-environment="shadow"] .tile.wall {
+  background-image: url("./env/shadow forest/bg.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.board[data-environment="shadow"] .tile.unknown {
+  color: transparent;
+}
+
+.board[data-environment="underwater"] .tile.unknown,
+.board[data-environment="underwater"] .tile.wall {
+  background-image: url("./env/underwater basin/bg.gif");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.board[data-environment="underwater"] .tile.unknown {
+  color: transparent;
+}
+
+.board[data-environment="swamp"] .tile.unknown,
+.board[data-environment="swamp"] .tile.wall {
+  background-image: url("./env/putrid swamp/bg.gif");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.board[data-environment="swamp"] .tile.unknown {
+  color: transparent;
+}
+
+.board[data-environment="depths"] .tile.unknown,
+.board[data-environment="depths"] .tile.wall {
+  background-image: url("./env/echoing depths/bg.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.board[data-environment="depths"] .tile.unknown {
+  color: transparent;
+}
+
+.board[data-environment="blood"] .tile.unknown,
+.board[data-environment="blood"] .tile.wall {
+  background-image: url("./env/blood cave/bg.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.board[data-environment="blood"] .tile.unknown {
+  color: transparent;
+}
+
+.board[data-environment="custom"] .tile.unknown,
+.board[data-environment="custom"] .tile.wall {
+  background-image: var(--custom-background-image, linear-gradient(135deg, rgba(255, 255, 255, 0.025), transparent 45%));
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: #070805;
+}
+
+.board[data-environment="custom"] .tile.unknown {
+  color: transparent;
+}
+
+.tile.exit {
+  background: #52411c;
+  color: var(--gold);
+}
+
+.tile.player {
+  background: #f1d27b;
+  color: #15140e;
+  font-weight: 900;
+}
+
+.tile.monster {
+  background: #5b251e;
+  color: #ffd1ca;
+}
+
+.tile.item {
+  background: #21472a;
+  color: #d5ffd0;
+}
+
+.tile.shop-floor {
+  background:
+    linear-gradient(90deg, rgba(255, 214, 84, 0.5) 0 2px, transparent 2px 100%),
+    linear-gradient(0deg, rgba(255, 214, 84, 0.5) 0 2px, transparent 2px 100%),
+    #8b1f1f;
+  color: #ffe9ac;
+  box-shadow: inset 0 0 0 1px rgba(255, 214, 84, 0.22);
+}
+
+.tile.shop-item {
+  background: #7a2a22;
+  color: #fff1c4;
+}
+
+.tile.shopkeeper {
+  background:
+    radial-gradient(circle at 50% 35%, rgba(255, 223, 112, 0.22), transparent 52%),
+    #5a2f16;
+  color: #ffe18f;
+  font-weight: 900;
+}
+
+.tile.projectile {
+  background: #2b5f9e;
+  color: #e4f4ff;
+  text-shadow: 0 0 10px rgba(148, 209, 255, 0.9);
+}
+
+.tile.special-attack-preview {
+  box-shadow:
+    inset 0 0 0 2px rgba(162, 220, 255, 0.96),
+    inset 0 0 22px rgba(84, 173, 255, 0.42);
+}
+
+.tile.special-attack-preview::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(70, 150, 255, 0.42);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.tile.melee-slash::after {
+  content: "\\";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: rgba(255, 255, 255, 0.96);
+  font-size: clamp(1.9rem, 4.8vw, 3.2rem);
+  font-weight: 900;
+  text-shadow:
+    0 0 18px rgba(255, 255, 255, 0.98),
+    0 0 6px rgba(255, 255, 255, 0.92);
+  animation: meleeSlash 90ms ease-out forwards;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.tile.hit-flicker {
+  will-change: opacity;
+}
+
+@keyframes meleeSlash {
+  0% {
+    opacity: 0;
+    transform: translate(12%, -12%) scale(0.72);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+.tile.hit-flicker-hidden {
+  opacity: 0 !important;
+}
+
+.tile.trap {
+  background: #3f334b;
+  color: #e5d2ff;
+}
+
+.tile.trap-design-caret {
+  background: #3f334b;
+  color: #e5d2ff;
+}
+
+.tile.trap-design-fungus {
+  background: #28451f;
+  color: #dcffc9;
+}
+
+.tile.trap-design-lava {
+  background: #5a2a16;
+  color: #ffd5bc;
+}
+
+.tile.trap-design-ice {
+  background: #d1f7ff;
+  color: #123843;
+}
+
+.tile.trap-design-hole {
+  background: radial-gradient(circle at 50% 50%, #090116 0 26%, #2f2267 27% 52%, #120423 53% 100%);
+  color: #f1e8ff;
+}
+
+.tile.sigil {
+  background: #24463e;
+  color: #bfffe1;
+  font-weight: 900;
+}
+
+.tile.special-room {
+  background: #4d4420;
+  color: #ffe6a5;
+}
+
+.tile.fungus {
+  background: #28451f;
+  color: #dcffc9;
+}
+
+.tile.custom-floor {
+  background-image: var(--custom-floor-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: #2f2a1f;
+}
+
+.tile.ruins-floor {
+  background-image: url("./env/ancient ruins/tile.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.tile.fungal-floor {
+  background-image: url("./env/fungal grotto/tile.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.tile.lava {
+  background: #5a2a16;
+}
+
+.tile.ember-floor {
+  background-image: url("./env/ember vault/tile.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.tile.frost-floor {
+  background: #274a68;
+  color: #e7f6ff;
+}
+
+.tile.cosmic-floor {
+  background-image: url("./env/cosmic escape/tile.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  color: #f2ecff;
+}
+
+.tile.beach-floor {
+  background-image: url("./env/dashing beach/tile.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.tile.ghastly-floor {
+  background-image: url("./env/ghastly valley/tile.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.tile.shadow-floor {
+  background-image: url("./env/shadow forest/tile.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.tile.underwater-floor {
+  background-image: url("./env/underwater basin/tile.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.tile.swamp-floor {
+  background-image: url("./env/putrid swamp/tile.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.tile.depths-floor {
+  background-image: url("./env/echoing depths/tile.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.tile.blood-floor {
+  background-image: url("./env/blood cave/tile.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.tile.ice {
+  background: #d1f7ff;
+  color: #123843;
+}
+
+.tile.hole {
+  background: radial-gradient(circle at 50% 50%, #090116 0 26%, #2f2267 27% 52%, #120423 53% 100%);
+  color: #f1e8ff;
+}
+
+.hud {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+  gap: 0.5rem;
+}
+
+.hud div {
+  display: grid;
+  gap: 0.12rem;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.inventory-menu {
+  animation: revealMenu 180ms ease-out;
+  position: sticky;
+  top: 1rem;
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+}
+
+.custom-environment-controls {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.8rem;
+  border: 1px solid rgba(245, 236, 210, 0.12);
+  border-radius: 0.95rem;
+  background: rgba(15, 16, 11, 0.45);
+}
+
+.custom-environment-upload-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.custom-environment-upload {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.custom-environment-status,
+.custom-environment-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.environment-stage-builder {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.8rem;
+  border: 1px solid rgba(245, 236, 210, 0.12);
+  border-radius: 0.2rem;
+  background: rgba(15, 16, 11, 0.45);
+}
+
+.environment-stage-builder h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.environment-stage-list {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.environment-stage-row {
+  display: grid;
+  grid-template-columns: minmax(0, 120px) minmax(0, 1fr) auto;
+  gap: 0.65rem;
+  align-items: end;
+  padding: 0.7rem;
+  border: 1px solid rgba(245, 236, 210, 0.12);
+  border-radius: 0.2rem;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.environment-stage-row.builder-row-fresh,
+.custom-environment-entry.builder-row-fresh {
+  border-color: rgba(244, 185, 66, 0.72);
+  background: rgba(244, 185, 66, 0.09);
+  box-shadow: inset 0 0 0 1px rgba(244, 185, 66, 0.38);
+}
+
+.environment-stage-row button {
+  align-self: end;
+}
+
+.stage-base-label {
+  align-self: end;
+  color: var(--muted);
+  font-size: 0.82rem;
+  text-align: right;
+}
+
+.custom-environment-library {
+  display: grid;
+  gap: 0.75rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid rgba(245, 236, 210, 0.12);
+}
+
+.custom-environment-library h4 {
+  margin: 0;
+  font-size: 0.98rem;
+}
+
+.custom-environment-library-list {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.custom-environment-entry {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid rgba(245, 236, 210, 0.12);
+  border-radius: 0.2rem;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.sound-pack-body {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.plain-section {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  padding: 0 !important;
+  overflow: visible !important;
+}
+
+.run-log-body,
+.special-attack-body,
+.sigil-pool-body,
+.enemy-drop-body {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.85rem;
+}
+
+.sound-pack-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.sound-pack-custom-controls {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.sound-effect-list {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.sound-effect-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.8rem;
+  align-items: center;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid rgba(245, 236, 210, 0.12);
+  border-radius: 0.8rem;
+  background: rgba(15, 16, 11, 0.38);
+}
+
+.sound-effect-copy {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.sound-effect-copy strong {
+  font-size: 0.95rem;
+}
+
+.sound-effect-status {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.sound-effect-actions {
+  display: flex;
+  gap: 0.55rem;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.sound-effect-upload-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.35rem;
+  padding: 0.45rem 0.95rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+}
+
+.sound-effect-upload-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.sound-effect-input {
+  display: none;
+}
+
+.inventory-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.inventory-layout h3 {
+  margin: 0 0 0.75rem;
+  color: var(--gold);
+  font-size: 0.9rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.inventory-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+}
+
+.inventory-heading h3 {
+  margin: 0;
+}
+
+.inventory-heading-main {
+  display: flex;
+  align-items: baseline;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.inventory-count {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.inventory-heading button {
+  padding: 0.34rem 0.72rem;
+  font-size: 0.78rem;
+}
+
+.item-list {
+  display: grid;
+  gap: 0.65rem;
+}
+
+#equipmentList {
+  grid-template-columns: 1fr 1fr;
+}
+
+#floorItemList {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+#inventoryList {
+  grid-template-columns: 1fr;
+}
+
+.item-card {
+  position: relative;
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.62rem;
+  border: 1px solid rgba(245, 236, 210, 0.12);
+  border-radius: 0.95rem;
+  background: rgba(15, 16, 11, 0.45);
+  overflow: hidden;
+}
+
+.item-card.rarity-highlight {
+  border-color: var(--rarity-border, rgba(245, 236, 210, 0.12));
+  background: var(--rarity-fill, rgba(15, 16, 11, 0.45));
+  box-shadow: inset 0 0 0 1px var(--rarity-glow, transparent);
+}
+
+.item-card.rarity-highlight::before {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  pointer-events: none;
+  opacity: 0.58;
+  background:
+    radial-gradient(circle at 50% 50%, var(--rarity-glow, transparent), transparent 62%);
+}
+
+.item-card.rarity-effect-none::before {
+  display: none;
+}
+
+.item-card.rarity-effect-pulse::before {
+  opacity: 0.5;
+  animation: rarityPulse 1.9s ease-in-out infinite;
+  animation-delay: var(--rarity-delay, 0s);
+}
+
+.item-card.rarity-effect-phase::before {
+  background:
+    linear-gradient(135deg, transparent 8%, rgba(255, 255, 255, 0.08) 28%, var(--rarity-glow, transparent) 52%, transparent 82%);
+  background-size: 200% 200%;
+  opacity: 0.62;
+  animation: rarityPhase 2.5s linear infinite;
+  animation-delay: var(--rarity-delay, 0s);
+}
+
+.item-card.rarity-effect-fog::before {
+  background:
+    radial-gradient(circle at 25% 35%, var(--rarity-glow, transparent), transparent 38%),
+    radial-gradient(circle at 75% 60%, var(--rarity-glow, transparent), transparent 34%),
+    radial-gradient(circle at 48% 52%, rgba(255, 255, 255, 0.06), transparent 28%);
+  opacity: 0.62;
+  filter: blur(12px);
+  animation: rarityFog 5.2s ease-in-out infinite alternate;
+  animation-delay: var(--rarity-delay, 0s);
+}
+
+.item-card.rarity-effect-shimmer::before {
+  background:
+    linear-gradient(110deg, transparent 16%, rgba(255, 255, 255, 0.1) 36%, var(--rarity-glow, transparent) 50%, transparent 68%);
+  background-size: 220% 100%;
+  opacity: 0.72;
+  animation: rarityShimmer 1.7s linear infinite;
+  animation-delay: var(--rarity-delay, 0s);
+}
+
+.item-card.rarity-effect-surge::before {
+  background:
+    linear-gradient(115deg, transparent 12%, rgba(255, 255, 255, 0.1) 26%, var(--rarity-glow, transparent) 48%, rgba(255, 255, 255, 0.06) 62%, transparent 82%);
+  background-size: 240% 120%;
+  opacity: 0.72;
+  animation: raritySurge 2.3s ease-in-out infinite;
+  animation-delay: var(--rarity-delay, 0s);
+}
+
+.item-card.rarity-effect-flicker::before {
+  background:
+    radial-gradient(circle at 50% 50%, var(--rarity-glow, transparent), transparent 52%),
+    linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.08) 48%, transparent 100%);
+  opacity: 0.68;
+  animation: rarityFlicker 1.25s steps(5, end) infinite;
+  animation-delay: var(--rarity-delay, 0s);
+}
+
+.item-card.rarity-effect-bloom::before {
+  background:
+    radial-gradient(circle at 50% 50%, var(--rarity-glow, transparent), transparent 45%),
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.08), transparent 24%);
+  opacity: 0.72;
+  filter: blur(14px);
+  animation: rarityBloom 2.15s ease-in-out infinite;
+  animation-delay: var(--rarity-delay, 0s);
+}
+
+.item-card.cursed {
+  border-color: rgba(232, 64, 48, 0.98);
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 120, 104, 0.78),
+    0 0 0 2px rgba(232, 64, 48, 0.88),
+    0 0 18px rgba(232, 64, 48, 0.34);
+}
+
+.item-card strong {
+  color: var(--text);
+}
+
+.equipment-name-button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+  cursor: text;
+}
+
+.equipment-name-button:hover {
+  color: var(--gold);
+}
+
+.equipment-name-input {
+  width: 100%;
+  border-radius: 0.45rem;
+  border: 1px solid rgba(245, 236, 210, 0.18);
+  background: rgba(10, 12, 7, 0.8);
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
+  padding: 0.18rem 0.38rem;
+}
+
+.curse-skull {
+  color: rgba(232, 64, 48, 0.98);
+}
+
+.bless-bell {
+  color: #f4c95d;
+}
+
+.compact-item-card {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+  padding: 0.42rem 0.5rem;
+  cursor: grab;
+}
+
+.compact-item-card.dragging {
+  opacity: 0.5;
+  cursor: grabbing;
+}
+
+.compact-item-card.drag-target {
+  outline: 2px solid rgba(244, 185, 66, 0.72);
+  outline-offset: 2px;
+}
+
+.compact-item-details {
+  display: grid;
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: 0.08rem;
+}
+
+.compact-item-details strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.item-icon {
+  flex: 0 0 auto;
+  width: 1.45rem;
+  text-align: center;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.inventory-pin {
+  flex: 0 0 auto;
+  width: 1.7rem;
+  min-width: 1.7rem;
+  padding: 0.2rem 0.3rem;
+  border-radius: 0.6rem;
+  color: var(--muted);
+  background: rgba(15, 16, 11, 0.45);
+}
+
+.inventory-pin.pinned {
+  color: rgba(232, 64, 48, 0.98);
+  border-color: rgba(245, 236, 210, 0.18);
+  background: rgba(15, 16, 11, 0.45);
+}
+
+.item-description {
+  min-width: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.25;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.compact-item-actions {
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+}
+
+.item-card span,
+.item-card p,
+.menu-help {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.compact-item-card .item-icon {
+  color: var(--text);
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.item-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.equipped-item-details {
+  display: grid;
+  gap: 0.14rem;
+}
+
+.equipped-item-actions {
+  justify-content: flex-end;
+  margin-top: auto;
+}
+
+.item-actions button {
+  padding: 0.34rem 0.58rem;
+  font-size: 0.78rem;
+}
+
+.empty-list {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.published-browser {
+  display: grid;
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(245, 236, 210, 0.12);
+}
+
+.published-browser .panel-heading span,
+.item-pool-settings .panel-heading span,
+.rune-pool-settings .panel-heading span,
+.trap-pool-settings .panel-heading span,
+.enemy-pool-settings .panel-heading span {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.environmental-effects,
+.custom-goal-settings,
+.special-room-settings,
+.rune-pool-settings,
+.special-attack-settings,
+.trap-pool-settings,
+.sigil-pool-settings,
+.enemy-type-settings,
+.boss-room-settings,
+.sound-pack-settings,
+.starting-stats-settings,
+.leveling-settings,
+.starting-equipment-settings,
+.starting-inventory-settings {
+  border: 1px solid rgba(245, 236, 210, 0.12);
+  border-radius: 0.95rem;
+  padding: 0;
+  background: rgba(15, 16, 11, 0.45);
+  overflow: hidden;
+}
+
+.item-pool-settings,
+.enemy-pool-settings {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.pool-frame {
+  border: 1px solid rgba(245, 236, 210, 0.12);
+  border-radius: 0.95rem;
+  padding: 0.85rem;
+  background: rgba(15, 16, 11, 0.45);
+  overflow: hidden;
+}
+
+.environmental-effects summary,
+.custom-goal-settings summary,
+.special-room-settings summary,
+.run-log-settings summary,
+.rune-pool-settings summary,
+.special-attack-settings summary,
+.trap-pool-settings summary,
+.sigil-pool-settings summary,
+.enemy-type-settings summary,
+.enemy-drop-details summary,
+.boss-room-settings summary,
+.sound-pack-settings summary,
+.starting-stats-settings summary,
+.leveling-settings summary,
+.starting-equipment-settings summary,
+.starting-inventory-settings summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+  padding: 0.75rem;
+  color: var(--gold);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.environmental-effects summary {
+  font-size: 0.95rem;
+}
+
+.trap-pool-body {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.85rem;
+}
+
+.rune-pool-body {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.85rem;
+}
+
+.rune-pool-settings summary::before,
+.special-attack-settings summary::before,
+.trap-pool-settings summary::before,
+.sigil-pool-settings summary::before,
+.enemy-type-settings summary::before,
+.enemy-drop-details summary::before {
+  content: "▶";
+  margin-right: 0.45rem;
+  color: var(--gold);
+  font-size: 0.7rem;
+  line-height: 1;
+  transform: translateY(-0.02rem);
+}
+
+.rune-pool-settings[open] summary::before,
+.special-attack-settings[open] summary::before,
+.trap-pool-settings[open] summary::before,
+.sigil-pool-settings[open] summary::before,
+.enemy-type-settings[open] summary::before,
+.enemy-drop-details[open] summary::before {
+  content: "▼";
+}
+
+.rune-pool-settings summary::-webkit-details-marker,
+.special-attack-settings summary::-webkit-details-marker,
+.trap-pool-settings summary::-webkit-details-marker,
+.sigil-pool-settings summary::-webkit-details-marker,
+.enemy-type-settings summary::-webkit-details-marker,
+.enemy-drop-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.rune-pool-settings summary,
+.special-attack-settings summary,
+.trap-pool-settings summary,
+.sigil-pool-settings summary,
+.enemy-type-settings summary {
+  justify-content: flex-start;
+}
+
+.special-attack-settings summary span:last-child,
+.sigil-pool-settings summary span:last-child {
+  margin-left: auto;
+}
+
+.environmental-effects summary span:last-child {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 400;
+}
+
+.special-room-settings summary span:last-child {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 400;
+}
+
+.run-log-settings summary span:last-child {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 400;
+}
+
+.special-attack-settings summary span:last-child,
+.sigil-pool-settings summary span:last-child,
+.enemy-type-settings summary span:last-child,
+.enemy-drop-details summary span:last-child,
+.sound-pack-settings summary span:last-child {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 400;
+}
+
+.custom-goal-settings summary span:last-child {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 400;
+}
+
+.hunger-heal-rules {
+  border: 1px solid rgba(245, 236, 210, 0.12);
+  border-radius: 0.95rem;
+  background: rgba(15, 16, 11, 0.45);
+  overflow: hidden;
+}
+
+.hunger-heal-rules summary {
+  padding: 0.7rem 0.75rem;
+  color: var(--gold);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.hunger-heal-rule-list {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0 0.75rem 0.75rem;
+}
+
+.hunger-heal-rule-list .inline-check {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.unidentified-settings {
+  border: 1px solid rgba(245, 236, 210, 0.12);
+  border-radius: 0.95rem;
+  background: rgba(15, 16, 11, 0.45);
+  overflow: hidden;
+}
+
+.unidentified-settings summary {
+  padding: 0.7rem 0.75rem;
+  color: var(--gold);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.unidentified-rule-list {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0 0.75rem 0.75rem;
+}
+
+.unidentified-rule-list p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.goal-fields {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.75rem;
+}
+
+.special-room-list {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.75rem;
+}
+
+.boss-room-body {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0 0.75rem 0.75rem;
+}
+
+.boss-room-controls {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.boss-room-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.boss-room-grid label {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.boss-attack-section {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.75rem;
+  border: 1px solid rgba(245, 236, 210, 0.12);
+  border-radius: 0.95rem;
+  background: rgba(15, 16, 11, 0.45);
+}
+
+.boss-attack-list {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.boss-attack-row {
+  display: grid;
+  gap: 0.6rem;
+  padding: 0.75rem;
+  border: 1px solid rgba(245, 236, 210, 0.12);
+  border-radius: 0.95rem;
+  background: rgba(15, 16, 11, 0.45);
+}
+
+.boss-attack-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.6rem;
+}
+
+.boss-attack-header label,
+.boss-attack-notes {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.boss-attack-header .item-actions {
+  align-items: center;
+}
+
+.boss-attack-header .item-actions label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--muted);
+}
+
+.boss-attack-header .item-actions input {
+  width: auto;
+}
+
+.boss-attack-fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.boss-attack-fields label {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.special-room-row {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.75rem;
+  border: 1px solid rgba(245, 236, 210, 0.12);
+  border-radius: 0.95rem;
+  background: rgba(15, 16, 11, 0.45);
+}
+
+.special-room-row strong {
+  color: var(--text);
+}
+
+.special-room-row p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.special-room-row label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.special-room-row input {
+  width: auto;
+}
+
+.recipe-entry-disabled {
+  opacity: 0.42;
+  filter: saturate(0.55) grayscale(0.18);
+}
+
+.recipe-entry-disabled strong,
+.recipe-entry-disabled p,
+.recipe-entry-disabled label,
+.recipe-entry-disabled summary,
+.recipe-entry-disabled .rune-summary,
+.recipe-entry-disabled .trap-summary,
+.recipe-entry-disabled .sigil-summary {
+  color: rgba(245, 236, 210, 0.58);
+}
+
+.starting-stats-grid,
+.starting-equipment-grid,
+.starting-inventory-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+  padding: 0 0.75rem 0.75rem;
+}
+
+.starting-stat-card,
+.starting-slot-card,
+.starting-inventory-slot {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.62rem;
+  border: 1px solid rgba(245, 236, 210, 0.12);
+  border-radius: 0.95rem;
+  background: rgba(15, 16, 11, 0.45);
+}
+
+.starting-stat-card,
+.starting-slot-card .inline-check,
+.starting-inventory-slot .inline-check {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.leveling-body {
+  display: grid;
+  gap: 0.8rem;
+  padding: 0 0.75rem 0.75rem;
+}
+
+.leveling-controls {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.leveling-table-wrap {
+  max-height: 22rem;
+  overflow: auto;
+  border: 1px solid rgba(245, 236, 210, 0.12);
+  border-radius: 0.95rem;
+  background: rgba(15, 16, 11, 0.45);
+}
+
+.leveling-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.leveling-table th,
+.leveling-table td {
+  padding: 0.45rem 0.55rem;
+  border-bottom: 1px solid rgba(245, 236, 210, 0.08);
+  text-align: left;
+}
+
+.leveling-table th {
+  position: sticky;
+  top: 0;
+  background: rgba(28, 29, 19, 0.96);
+  color: var(--gold);
+  z-index: 1;
+}
+
+.leveling-table td:first-child {
+  color: var(--muted);
+  width: 4.5rem;
+}
+
+.leveling-table input {
+  width: 100%;
+}
+
+.leveling-growth {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.75rem;
+  border: 1px solid rgba(245, 236, 210, 0.12);
+  border-radius: 0.95rem;
+  background: rgba(15, 16, 11, 0.45);
+}
+
+.leveling-growth h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--gold);
+}
+
+.leveling-growth-list {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.leveling-growth-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 6rem;
+  gap: 0.7rem;
+  align-items: center;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.leveling-growth-row .inline-check {
+  color: inherit;
+}
+
+.leveling-growth-row.disabled-growth {
+  opacity: 0.45;
+}
+
+.effect-list {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.effect-row {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.75rem;
+  border: 1px solid rgba(245, 236, 210, 0.12);
+  border-radius: 0.95rem;
+  background: rgba(15, 16, 11, 0.45);
+}
+
+.effect-row strong {
+  color: var(--text);
+}
+
+.effect-row label {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--muted);
+}
+
+.effect-row input {
+  width: auto;
+}
+
+.effect-row.effect-disabled {
+  opacity: 0.42;
+  filter: saturate(0.45);
+  pointer-events: none;
+}
+
+.effect-row.effect-disabled strong,
+.effect-row.effect-disabled label,
+.effect-row.effect-disabled .conditional-effect-value {
+  color: rgba(245, 236, 210, 0.56);
+}
+
+.effect-row-timed label {
+  flex-wrap: wrap;
+}
+
+.effect-row-timed input[type="number"] {
+  width: 4.3rem;
+}
+
+.effect-row-conditional label {
+  flex-wrap: wrap;
+}
+
+.effect-row-conditional select,
+.effect-row-conditional input[type="number"] {
+  min-width: 11rem;
+}
+
+.effect-row-conditional .conditional-effect-value label {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.item-pool-list {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.trap-pool-list,
+.sigil-pool-list,
+.rune-pool-list,
+.special-attack-list,
+.enemy-pool-list,
+.enemy-type-list {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.enemy-drop-controls {
+  display: grid;
+  gap: 0.65rem;
+  margin-bottom: 0.75rem;
+}
+
+.enemy-drop-details {
+  border: 1px solid rgba(245, 236, 210, 0.12);
+  border-radius: 0.95rem;
+  background: rgba(15, 16, 11, 0.45);
+  overflow: hidden;
+}
+
+.enemy-drop-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.enemy-drop-categories {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem 0.85rem;
+}
+
+.enemy-drop-option {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.rune-row {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.75rem;
+  border: 1px solid rgba(245, 236, 210, 0.12);
+  border-radius: 0.95rem;
+  background: rgba(15, 16, 11, 0.45);
+}
+
+.special-attack-row {
+  display: grid;
+  gap: 0.6rem;
+  padding: 0.75rem;
+  border: 1px solid rgba(245, 236, 210, 0.12);
+  border-radius: 0.95rem;
+  background: rgba(15, 16, 11, 0.45);
+}
+
+.rune-row-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.6rem;
+}
+
+.special-attack-row-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.6rem;
+}
+
+.rune-row-header label {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.special-attack-row-header label {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.rune-row-header .item-actions label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.special-attack-row-header .item-actions label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.rune-row-header .item-actions input {
+  width: auto;
+}
+
+.special-attack-row-header .item-actions input {
+  width: auto;
+}
+
+.rune-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+  align-items: end;
+}
+
+.special-attack-fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
+  align-items: end;
+}
+
+.rune-fields label {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.special-attack-fields label,
+.special-attack-design-block {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.rune-summary {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.special-attack-summary {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.special-attack-design-block {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.special-attack-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.18rem;
+  max-width: 16rem;
+}
+
+.special-attack-cell {
+  aspect-ratio: 1;
+  min-height: 1.65rem;
+  border-radius: 0.28rem;
+  border: 1px solid rgba(245, 236, 210, 0.12);
+  background: rgba(7, 8, 5, 0.9);
+  padding: 0;
+}
+
+.special-attack-cell.active {
+  background: rgba(245, 244, 236, 0.94);
+  border-color: rgba(255, 255, 255, 0.7);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+}
+
+.special-attack-cell.center {
+  background: #f8ca51;
+  border-color: rgba(248, 202, 81, 0.85);
+  color: #1a1607;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.trap-row {
+  display: grid;
+  gap: 0.6rem;
+  padding: 0.75rem;
+  border: 1px solid rgba(245, 236, 210, 0.12);
+  border-radius: 0.95rem;
+  background: rgba(15, 16, 11, 0.45);
+}
+
+.sigil-row {
+  display: grid;
+  gap: 0.6rem;
+  padding: 0.75rem;
+  border: 1px solid rgba(245, 236, 210, 0.12);
+  border-radius: 0.95rem;
+  background: rgba(15, 16, 11, 0.45);
+}
+
+.trap-row-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.sigil-row-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.trap-row-header strong {
+  color: var(--text);
+}
+
+.sigil-row-header strong {
+  color: var(--text);
+}
+
+.trap-row-header .item-actions {
+  align-items: center;
+}
+
+.trap-row-header label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--muted);
+}
+
+.sigil-row-header label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--muted);
+}
+
+.trap-row-header input {
+  width: auto;
+}
+
+.sigil-row-header input {
+  width: auto;
+}
+
+.trap-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) repeat(3, minmax(4.7rem, 0.62fr));
+  gap: 0.55rem;
+  align-items: end;
+}
+
+.sigil-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) repeat(3, minmax(4.7rem, 0.62fr));
+  gap: 0.55rem;
+  align-items: end;
+}
+
+.trap-fields label {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.sigil-fields label {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.trap-summary {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.sigil-summary {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.item-pool-category {
+  border: 1px solid rgba(245, 236, 210, 0.12);
+  border-radius: 0.95rem;
+  background: rgba(15, 16, 11, 0.45);
+  overflow: hidden;
+}
+
+.item-pool-category summary {
+  padding: 0.75rem;
+  color: var(--gold);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.item-pool-category.pool-disabled {
+  opacity: 0.42;
+  filter: saturate(0.55);
+}
+
+.item-pool-category.pool-disabled summary {
+  color: rgba(245, 236, 210, 0.58);
+}
+
+.item-pool-category.pool-disabled .item-pool-entries,
+.item-pool-category.pool-disabled .item-pool-category-control strong,
+.item-pool-category.pool-disabled .item-pool-row strong {
+  color: rgba(245, 236, 210, 0.56);
+}
+
+.item-pool-category.pool-disabled .item-pool-category-control,
+.item-pool-category.pool-disabled .item-pool-row {
+  filter: grayscale(0.2);
+}
+
+.enemy-family {
+  border: 1px solid rgba(245, 236, 210, 0.12);
+  border-radius: 0.95rem;
+  background: rgba(15, 16, 11, 0.45);
+  overflow: hidden;
+}
+
+.enemy-type-body {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.85rem;
+}
+
+.enemy-type-row {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid rgba(245, 236, 210, 0.12);
+  border-radius: 0.8rem;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.enemy-type-family-list {
+  padding-top: 0;
+}
+
+.enemy-family summary {
+  padding: 0.75rem;
+  color: var(--gold);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.enemy-family-body {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0 0.75rem 0.75rem;
+}
+
+.enemy-family-toggle {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) 5rem auto;
+  align-items: center;
+  gap: 0.55rem;
+  padding-bottom: 0.45rem;
+  border-bottom: 1px solid rgba(245, 236, 210, 0.1);
+}
+
+.enemy-family-toggle label {
+  color: var(--muted);
+}
+
+.enemy-family-toggle .item-actions label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.enemy-family-toggle .item-actions input {
+  width: auto;
+}
+
+.enemy-level-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1.5fr) repeat(4, minmax(3.9rem, 0.65fr));
+  gap: 0.5rem;
+  align-items: end;
+  padding: 0.65rem;
+  border: 1px solid rgba(245, 236, 210, 0.12);
+  border-radius: 0.95rem;
+  background: rgba(15, 16, 11, 0.45);
+}
+
+.enemy-level-row label {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.enemy-level-skills {
+  grid-column: 1 / -1;
+  border-top: 1px solid rgba(245, 236, 210, 0.1);
+  padding-top: 0.55rem;
+}
+
+.enemy-level-skills summary {
+  color: var(--gold);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.enemy-skill-list {
+  display: grid;
+  gap: 0.45rem;
+  padding-top: 0.55rem;
+}
+
+.enemy-skill-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1.2fr) repeat(4, minmax(5.5rem, auto)) auto;
+  gap: 0.45rem;
+  align-items: end;
+  padding: 0.5rem;
+  border: 1px solid rgba(245, 236, 210, 0.1);
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.enemy-skill-row label {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.enemy-skill-summary {
+  grid-column: 1 / -1;
+  margin: 0.15rem 0 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.enemy-level-enable {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.7rem;
+}
+
+.enemy-level-enable input {
+  width: auto;
+}
+
+.enemy-family-pursuit {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid rgba(245, 236, 210, 0.12);
+  border-radius: 0.95rem;
+  background: rgba(15, 16, 11, 0.45);
+}
+
+.enemy-family-pursuit-toggle {
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.enemy-family-pursuit-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 0.45rem 0.8rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.enemy-family-pursuit-options.disabled {
+  opacity: 0.48;
+}
+
+.enemy-family.recipe-entry-disabled summary,
+.enemy-level-row.recipe-entry-disabled label,
+.item-pool-row.recipe-entry-disabled strong,
+.item-pool-row.recipe-entry-disabled label,
+.special-room-row.recipe-entry-disabled .special-room-title {
+  color: rgba(245, 236, 210, 0.58);
+}
+
+.item-pool-entries {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0 0.75rem 0.75rem;
+}
+
+.item-pool-row {
+  display: grid;
+  grid-template-columns: minmax(10rem, 1.3fr) repeat(4, auto) auto;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.item-pool-row .item-pool-name {
+  min-width: 0;
+}
+
+.item-pool-name input {
+  width: 100% !important;
+  min-width: 0;
+}
+
+.item-pool-tip {
+  grid-column: 1 / -1;
+  margin: -0.1rem 0 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.item-pool-runes {
+  grid-column: 1 / -1;
+}
+
+.item-pool-eligible {
+  grid-column: 1 / -1;
+}
+
+.item-pool-effects {
+  grid-column: 1 / -1;
+}
+
+.item-pool-runes summary {
+  cursor: pointer;
+  color: var(--gold);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.item-pool-eligible summary {
+  cursor: pointer;
+  color: var(--gold);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.item-pool-effects summary {
+  cursor: pointer;
+  color: var(--gold);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.item-effect-list {
+  display: grid;
+  gap: 0.45rem;
+  padding-top: 0.45rem;
+}
+
+.item-effect-row {
+  display: grid;
+  grid-template-columns: auto minmax(10rem, 1fr) repeat(2, auto) auto;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.item-effect-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--muted);
+}
+
+.item-effect-stat span {
+  white-space: nowrap;
+}
+
+.item-effect-stat input {
+  width: 3rem !important;
+  min-width: 3rem;
+  max-width: 3rem;
+  text-align: center;
+}
+
+.item-effect-actions {
+  padding-top: 0.45rem;
+}
+
+.item-pool-rune-summary {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 500;
+  margin-left: 0.35rem;
+}
+
+.item-pool-rune-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem 0.7rem;
+  padding-top: 0.45rem;
+}
+
+.item-pool-rune-option {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.item-pool-rune-option input {
+  width: auto;
+}
+
+.item-pool-category-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem 0.7rem;
+  padding-top: 0.45rem;
+}
+
+.item-pool-category-option {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.item-pool-category-option input {
+  width: auto;
+}
+
+.item-pool-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--muted);
+  flex: 0 0 auto;
+}
+
+.item-pool-stat span {
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+.item-pool-stat input {
+  width: 2.5rem !important;
+  min-width: 2.5rem;
+  max-width: 2.5rem;
+  padding-inline: 0.3rem;
+  text-align: center;
+  flex: 0 0 2.5rem;
+}
+
+.item-pool-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--muted);
+  flex: 0 0 auto;
+}
+
+.item-pool-select span {
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+.item-pool-select select {
+  min-width: 8.4rem;
+}
+
+.item-pool-flag {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.item-pool-category-control {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 0.55rem;
+  padding-bottom: 0.45rem;
+  border-bottom: 1px solid rgba(245, 236, 210, 0.1);
+  color: var(--text);
+  font-size: 0.86rem;
+}
+
+.item-pool-row label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.item-pool-row > .item-actions {
+  align-self: center;
+  white-space: nowrap;
+  flex-wrap: nowrap;
+}
+
+.item-pool-category-control label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--muted);
+}
+
+.item-pool-category-control .item-actions {
+  justify-content: flex-end;
+}
+
+.item-pool-category-control input,
+.item-pool-row input {
+  width: auto;
+}
+
+.item-pool-row input[type="number"],
+.enemy-level-row input[type="number"],
+.enemy-family input[type="number"] {
+  appearance: textfield;
+}
+
+.item-pool-row input[type="number"]::-webkit-outer-spin-button,
+.item-pool-row input[type="number"]::-webkit-inner-spin-button,
+.enemy-level-row input[type="number"]::-webkit-outer-spin-button,
+.enemy-level-row input[type="number"]::-webkit-inner-spin-button,
+.enemy-family input[type="number"]::-webkit-outer-spin-button,
+.enemy-family input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.item-pool-row.staff-row {
+  grid-template-columns: minmax(10rem, 1.15fr) auto auto auto auto auto;
+}
+
+.item-pool-row.grass-row {
+  grid-template-columns: minmax(8.4rem, 1fr) auto auto auto;
+}
+
+.item-pool-row.grass-row .item-actions {
+  justify-content: flex-start;
+  white-space: nowrap;
+}
+
+.item-pool-row.scroll-row {
+  grid-template-columns: minmax(8.4rem, 1fr) auto auto auto auto;
+}
+
+.item-pool-row.scroll-row .item-actions {
+  justify-content: flex-start;
+  white-space: nowrap;
+}
+
+.published-list {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.dungeon-card {
+  display: grid;
+  gap: 0.6rem;
+  padding: 0.8rem;
+  border: 1px solid rgba(245, 236, 210, 0.13);
+  border-radius: 1rem;
+  background: rgba(15, 16, 11, 0.52);
+}
+
+.dungeon-card strong {
+  color: var(--text);
+}
+
+.dungeon-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.4;
+}
+
+.dungeon-card-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.dungeon-card-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.48rem;
+  border: 1px solid rgba(245, 236, 210, 0.14);
+  border-radius: 999px;
+  background: rgba(92, 78, 24, 0.34);
+  color: #ead79f;
+  font-size: 0.72rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.dungeon-card .item-actions {
+  margin-top: 0.1rem;
+}
+
+.menu-help {
+  margin-top: 1rem;
+}
+
+/* Plain interface cleanup: remove glow, blur, and oversized rounding */
+.board-stage,
+.board,
+.end-screen,
+.end-screen-card,
+.end-screen-stat,
+.custom-environment-controls,
+.sound-effect-row,
+.dungeon-card,
+.dungeon-card-badge,
+.inventory-panel,
+.inventory-section,
+.equipment-slot,
+.floor-item-section,
+.shop-sell-section,
+.gambling-section,
+.upgrade-choice-section,
+.string-action-section,
+.published-browser,
+.boss-room-grid label,
+.boss-attack-section,
+.trap-pool-body,
+.sigil-pool-body,
+.enemy-pool-body,
+.item-pool-category,
+.item-pool-row,
+.rune-row,
+.special-attack-row,
+.trap-row,
+.sigil-row,
+.enemy-family,
+.enemy-level,
+.leveling-controls,
+.leveling-table-wrap,
+.goal-editor,
+.special-room-entry,
+.environmental-effect-row,
+.starting-equipment-grid > div,
+.starting-inventory-slot,
+.run-log {
+  border-radius: 0.2rem !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+.board {
+  background: #12110d;
+  border-width: 2px;
+}
+
+.board-stage {
+  border: 2px solid rgba(245, 236, 210, 0.14);
+}
+
+.end-screen {
+  background: rgba(10, 10, 8, 0.92);
+}
+
+.end-screen-card,
+.end-screen-stat,
+.custom-environment-controls,
+.sound-effect-row,
+.dungeon-card,
+.boss-room-grid label,
+.boss-attack-section,
+.item-pool-category,
+.item-pool-row,
+.rune-row,
+.special-attack-row,
+.trap-row,
+.sigil-row,
+.enemy-family,
+.enemy-level,
+.special-room-entry,
+.environmental-effect-row {
+  background: #211f18 !important;
+}
+
+.dungeon-card-badge,
+.sound-effect-upload-button {
+  border-radius: 0.2rem !important;
+  background: #343025 !important;
+  color: var(--text);
+}
+
+.sound-effect-upload-button:hover {
+  background: #3f3a2d !important;
+  transform: none;
+}
+
+.boss-glyph-overlay,
+.tile.shopkeeper,
+.tile.gambling-totem,
+.tile.special-attack-preview,
+.tile.melee-slash,
+.tile.hit-flicker {
+  text-shadow: none !important;
+}
+
+.hero {
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(245, 236, 210, 0.1);
+}
+
+.lede {
+  max-width: 56rem;
+  font-size: 1rem;
+}
+
+@keyframes revealMenu {
+  from {
+    opacity: 0;
+    transform: translateY(-0.35rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fungalBubbleDrift {
+  0% {
+    background-position: 0% 0%, 100% 100%, center, center;
+  }
+  50% {
+    background-position: 55% 38%, 42% 60%, center, center;
+  }
+  100% {
+    background-position: 100% 76%, 0% 18%, center, center;
+  }
+}
+
+@keyframes frostSmokeDrift {
+  0% {
+    background-position: 0% 18%, 100% 82%, 40% 100%, center, center;
+  }
+  35% {
+    background-position: 34% 8%, 76% 58%, 18% 76%, center, center;
+  }
+  68% {
+    background-position: 62% 36%, 36% 18%, 72% 52%, center, center;
+  }
+  100% {
+    background-position: 100% 62%, 8% 30%, 48% 16%, center, center;
+  }
+}
+
+@keyframes rarityPulse {
+  0%, 100% { opacity: 0.28; transform: scale(0.97); }
+  50% { opacity: 0.74; transform: scale(1.05); }
+}
+
+@keyframes rarityPhase {
+  0% { transform: translateX(-28%) translateY(-12%) rotate(0deg); }
+  50% { transform: translateX(14%) translateY(10%) rotate(8deg); }
+  100% { transform: translateX(30%) translateY(-5%) rotate(0deg); }
+}
+
+@keyframes rarityFog {
+  0% { transform: translate(-8%, -3%) scale(0.94); opacity: 0.34; }
+  100% { transform: translate(8%, 5%) scale(1.12); opacity: 0.66; }
+}
+
+@keyframes rarityShimmer {
+  0% { background-position: 160% 0; }
+  100% { background-position: -80% 0; }
+}
+
+@keyframes raritySurge {
+  0% { background-position: 160% 50%; transform: translateX(0) scale(0.99); }
+  50% { background-position: 45% 50%; transform: translateX(-1%) scale(1.015); }
+  100% { background-position: -70% 50%; transform: translateX(0) scale(0.99); }
+}
+
+@keyframes rarityFlicker {
+  0%, 100% { opacity: 0.28; transform: scale(0.995); }
+  18% { opacity: 0.76; transform: scale(1.015); }
+  36% { opacity: 0.34; transform: scale(1.002); }
+  58% { opacity: 0.82; transform: scale(1.02); }
+  78% { opacity: 0.42; transform: scale(0.998); }
+}
+
+@keyframes rarityBloom {
+  0%, 100% { opacity: 0.24; transform: scale(0.96); }
+  50% { opacity: 0.84; transform: scale(1.12); }
+}
+
+.log-panel {
+  max-height: 13rem;
+  overflow: auto;
+}
+
+.log-panel ol {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0.8rem 0 0;
+  padding-left: 0;
+  list-style: none;
+  color: var(--muted);
+}
+
+.log-panel li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.run-log-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: rgba(245, 236, 210, 0.52);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.run-log-divider::before,
+.run-log-divider::after {
+  content: "";
+  flex: 1 1 auto;
+  height: 1px;
+  background: rgba(245, 236, 210, 0.14);
+}
+
+.run-log-divider-label {
+  white-space: nowrap;
+}
+
+.run-log-number {
+  color: rgba(245, 236, 210, 0.62);
+  min-width: 1.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.run-log-damage {
+  color: #8fd3ff;
+  font-weight: 700;
+}
+
+.run-log-enemy {
+  color: #ffad5a;
+}
+
+.run-log-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.run-log-item-icon {
+  line-height: 1;
+}
+
+.log-error {
+  color: var(--red);
+  font-weight: 700;
+}
+
+.app-shell.recipe-collapsed .layout {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+.app-shell.recipe-collapsed .hero-copy {
+  display: none;
+}
+
+.app-shell.recipe-collapsed .hero {
+  justify-content: flex-end;
+}
+
+.app-shell.recipe-collapsed .creator-panel {
+  display: none;
+}
+
+.app-shell.recipe-collapsed .show-recipe-tab {
+  display: inline-flex;
+}
+
+.app-shell.recipe-collapsed .game-wrap {
+  grid-template-columns: minmax(680px, 1fr) minmax(360px, 520px);
+}
+
+.app-shell.recipe-extended .layout {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.app-shell.recipe-extended .creator-panel {
+  width: 100%;
+  max-width: none;
+}
+
+.app-shell.recipe-extended .game-wrap {
+  display: none;
+}
+
+.app-shell.recipe-extended .show-game-tab {
+  display: inline-flex;
+}
+
+@media (max-width: 920px) {
+  .hero,
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .hero {
+    display: grid;
+  }
+
+  .creator-panel {
+    position: static;
+  }
+
+  .hud {
+    grid-template-columns: 1fr;
+  }
+
+  .game-wrap {
+    grid-template-columns: 1fr;
+  }
+
+  .inventory-menu {
+    position: static;
+    max-height: none;
+  }
+
+  .inventory-layout {
+    grid-template-columns: 1fr;
+  }
+
+  #inventoryList,
+  #floorItemList {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .app-shell {
+    width: min(100% - 1rem, 1320px);
+    padding: 1rem 0;
+  }
+
+  .control-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .starting-equipment-grid,
+  .starting-inventory-grid,
+  .rarity-grid,
+  .custom-environment-upload-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rarity-card-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .end-screen-stats,
+  .item-pool-row {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .trap-fields,
+  .enemy-level-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .board {
+    grid-template-columns: repeat(28, minmax(9px, 1fr));
+    gap: 2px;
+    padding: 0.5rem;
+  }
+
+  .show-recipe-tab,
+  .show-game-tab {
+    writing-mode: horizontal-tb;
+  }
+}

@@ -1,0 +1,21 @@
+# OS / file explorer noise
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Editor / tooling
+.vscode/
+.idea/
+*.code-workspace
+
+# Logs / temp files
+*.log
+*.tmp
+*.temp
+
+# Local exports and packages
+*.mdmpkg
+*.zip
+
+# Private notes
+to do.md
