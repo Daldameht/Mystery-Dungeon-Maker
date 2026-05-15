@@ -214,6 +214,7 @@ let publishedDungeonCache = [];
 let publishedDungeonStoragePromise = null;
 
 const soundEffectDefinitions = [
+  { id: "themeMusic", label: "Theme Music", defaultFileName: "theme.mp3", defaultPath: "./audio/theme.mp3" },
   { id: "playerAttack", label: "Player Attack", defaultFileName: "player attack.wav", defaultPath: "./audio/player attack.wav" },
   { id: "enemyAttack", label: "Enemy Attack", defaultFileName: "enemy attack.wav", defaultPath: "./audio/enemy attack.wav" },
   { id: "specialAttack", label: "Special Attack", defaultFileName: "special attack.wav", defaultPath: "./audio/special attack.wav" },
@@ -235,7 +236,6 @@ const soundEffectDefinitions = [
   { id: "dungeonClear", label: "Dungeon Clear", defaultFileName: "dungeon clear.wav", defaultPath: "./audio/dungeon clear.wav" },
 ];
 const liveSoundEffects = new Set();
-const defaultThemeMusicPath = "./audio/theme.mp3";
 let activeThemeAudio = null;
 
 const itemDefinitions = {
@@ -878,7 +878,7 @@ function stopThemeMusic() {
 }
 
 function startThemeMusic(options = {}) {
-  const source = defaultThemeMusicPath;
+  const source = getSoundEffectSource("themeMusic");
   if (!source) {
     return null;
   }
