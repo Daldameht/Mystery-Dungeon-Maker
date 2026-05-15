@@ -4,6 +4,8 @@ A tiny browser prototype for a shareable, mystery-dungeon-style creator game.
 
 Click here to play: https://daldameht.github.io/Mystery-Dungeon-Maker/
 
+# Sharecodes
+
 Share & play other dungeons: https://github.com/Daldameht/Mystery-Dungeon-Maker-Sharecodes
 
 -Create a issue on the sharecode github & paste your share code or full package
