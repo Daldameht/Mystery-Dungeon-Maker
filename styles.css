@@ -1720,6 +1720,7 @@ h2 {
 .environmental-effects,
 .custom-goal-settings,
 .special-room-settings,
+.run-log-settings,
 .rune-pool-settings,
 .special-attack-settings,
 .trap-pool-settings,
@@ -1799,7 +1800,17 @@ h2 {
 .trap-pool-settings summary::before,
 .sigil-pool-settings summary::before,
 .enemy-type-settings summary::before,
-.enemy-drop-details summary::before {
+.enemy-drop-details summary::before,
+.boss-room-settings summary::before,
+.environmental-effects summary::before,
+.special-room-settings summary::before,
+.run-log-settings summary::before,
+.custom-goal-settings summary::before,
+.starting-stats-settings summary::before,
+.leveling-settings summary::before,
+.rarity-settings summary::before,
+.starting-equipment-settings summary::before,
+.starting-inventory-settings summary::before {
   content: "▶";
   margin-right: 0.45rem;
   color: var(--gold);
@@ -1813,7 +1824,17 @@ h2 {
 .trap-pool-settings[open] summary::before,
 .sigil-pool-settings[open] summary::before,
 .enemy-type-settings[open] summary::before,
-.enemy-drop-details[open] summary::before {
+.enemy-drop-details[open] summary::before,
+.boss-room-settings[open] summary::before,
+.environmental-effects[open] summary::before,
+.special-room-settings[open] summary::before,
+.run-log-settings[open] summary::before,
+.custom-goal-settings[open] summary::before,
+.starting-stats-settings[open] summary::before,
+.leveling-settings[open] summary::before,
+.rarity-settings[open] summary::before,
+.starting-equipment-settings[open] summary::before,
+.starting-inventory-settings[open] summary::before {
   content: "▼";
 }
 
@@ -1822,7 +1843,17 @@ h2 {
 .trap-pool-settings summary::-webkit-details-marker,
 .sigil-pool-settings summary::-webkit-details-marker,
 .enemy-type-settings summary::-webkit-details-marker,
-.enemy-drop-details summary::-webkit-details-marker {
+.enemy-drop-details summary::-webkit-details-marker,
+.boss-room-settings summary::-webkit-details-marker,
+.environmental-effects summary::-webkit-details-marker,
+.special-room-settings summary::-webkit-details-marker,
+.run-log-settings summary::-webkit-details-marker,
+.custom-goal-settings summary::-webkit-details-marker,
+.starting-stats-settings summary::-webkit-details-marker,
+.leveling-settings summary::-webkit-details-marker,
+.rarity-settings summary::-webkit-details-marker,
+.starting-equipment-settings summary::-webkit-details-marker,
+.starting-inventory-settings summary::-webkit-details-marker {
   display: none;
 }
 
@@ -1830,12 +1861,35 @@ h2 {
 .special-attack-settings summary,
 .trap-pool-settings summary,
 .sigil-pool-settings summary,
-.enemy-type-settings summary {
+.enemy-type-settings summary,
+.boss-room-settings summary,
+.environmental-effects summary,
+.special-room-settings summary,
+.run-log-settings summary,
+.custom-goal-settings summary,
+.starting-stats-settings summary,
+.leveling-settings summary,
+.rarity-settings summary,
+.starting-equipment-settings summary,
+.starting-inventory-settings summary {
   justify-content: flex-start;
 }
 
+.rune-pool-settings summary span:last-child,
 .special-attack-settings summary span:last-child,
-.sigil-pool-settings summary span:last-child {
+.trap-pool-settings summary span:last-child,
+.sigil-pool-settings summary span:last-child,
+.enemy-type-settings summary span:last-child,
+.boss-room-settings summary span:last-child,
+.environmental-effects summary span:last-child,
+.special-room-settings summary span:last-child,
+.run-log-settings summary span:last-child,
+.custom-goal-settings summary span:last-child,
+.starting-stats-settings summary span:last-child,
+.leveling-settings summary span:last-child,
+.rarity-settings summary span:last-child,
+.starting-equipment-settings summary span:last-child,
+.starting-inventory-settings summary span:last-child {
   margin-left: auto;
 }
 
@@ -1857,11 +1911,19 @@ h2 {
   font-weight: 400;
 }
 
+.rune-pool-settings summary span:last-child,
 .special-attack-settings summary span:last-child,
+.trap-pool-settings summary span:last-child,
 .sigil-pool-settings summary span:last-child,
 .enemy-type-settings summary span:last-child,
 .enemy-drop-details summary span:last-child,
-.sound-pack-settings summary span:last-child {
+.sound-pack-settings summary span:last-child,
+.boss-room-settings summary span:last-child,
+.starting-stats-settings summary span:last-child,
+.leveling-settings summary span:last-child,
+.rarity-settings summary span:last-child,
+.starting-equipment-settings summary span:last-child,
+.starting-inventory-settings summary span:last-child {
   color: var(--muted);
   font-size: 0.78rem;
   font-weight: 400;
