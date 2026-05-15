@@ -264,6 +264,20 @@ const itemDefinitions = {
   cashingString: { name: "Cashing String", kind: "string", stringEffect: "cashing", uses: 3, sellValue: 78, buyValue: 190 },
   trapguardBracelet: { name: "Trapguard Bracelet", kind: "bracelet", negateTraps: true, maxHpBonus: 0, sellValue: 95 },
   vitalityBracelet: { name: "Vitality Bracelet", kind: "bracelet", negateTraps: false, maxHpBonus: 15, sellValue: 120 },
+  hagglingBracelet: { name: "Haggling Bracelet", kind: "bracelet", effects: [{ enabled: true, type: "shopDiscount", value: 50, extra: 0 }], sellValue: 92 },
+  trapmoreBracelet: { name: "Trapmore Bracelet", kind: "bracelet", effects: [{ enabled: true, type: "trapmore", value: 6, extra: 0 }], sellValue: 90 },
+  monstercallBracelet: { name: "Monstercall Bracelet", kind: "bracelet", effects: [{ enabled: true, type: "monstercall", value: 100, extra: 0 }], sellValue: 88 },
+  goldLosingBracelet: { name: "Gold-losing Bracelet", kind: "bracelet", effects: [{ enabled: true, type: "goldLosing", value: 7, extra: 20 }], sellValue: 78 },
+  itemLosingBracelet: { name: "Item-losing Bracelet", kind: "bracelet", effects: [{ enabled: true, type: "itemLosing", value: 9, extra: 0 }], sellValue: 76 },
+  tiptoeBracelet: { name: "Tiptoe Bracelet", kind: "bracelet", effects: [{ enabled: true, type: "tiptoe", value: 1, extra: 0 }], sellValue: 98 },
+  wallpassBracelet: { name: "Wallpass Bracelet", kind: "bracelet", effects: [{ enabled: true, type: "wallPass", value: 4, extra: 0 }], sellValue: 110 },
+  daredevilBracelet: { name: "Daredevil Bracelet", kind: "bracelet", effects: [{ enabled: true, type: "daredevil", value: 22, extra: 1.5 }], sellValue: 102 },
+  cursebreakBracelet: { name: "Cursebreak Bracelet", kind: "bracelet", effects: [{ enabled: true, type: "cursebreak", value: 1, extra: 0 }], sellValue: 108 },
+  rustproofBracelet: { name: "Rustproof Bracelet", kind: "bracelet", effects: [{ enabled: true, type: "rustproof", value: 1, extra: 0 }], sellValue: 106 },
+  fortuneBracelet: { name: "Fortune Bracelet", kind: "bracelet", effects: [{ enabled: true, type: "fortune", value: 1, extra: 0 }], sellValue: 100 },
+  bellyshrinkBracelet: { name: "Bellyshrink Bracelet", kind: "bracelet", effects: [{ enabled: true, type: "maxHungerBonus", value: -25, extra: 0 }], sellValue: 68 },
+  bellyexpandBracelet: { name: "Bellyexpand Bracelet", kind: "bracelet", effects: [{ enabled: true, type: "maxHungerBonus", value: 25, extra: 0 }], sellValue: 96 },
+  strengthBracelet: { name: "Strength Bracelet", kind: "bracelet", effects: [{ enabled: true, type: "strengthBonus", value: 3, extra: 0 }], sellValue: 104 },
   goldBundle: { name: "Gold Coins", kind: "gold", gold: 10 },
 };
 
@@ -593,6 +607,7 @@ const game = {
   hitFx: null,
   playerHitStreak: 0,
   playerMissStreak: 0,
+  playerWalkSteps: 0,
   logSequence: 0,
   logEventCounter: 0,
   processingTurn: false,
@@ -2236,6 +2251,18 @@ const itemEffectDefinitions = [
   { id: "maxHungerBonus", label: "Max Hunger", kinds: ["bracelet", "grass", "food", "scroll", "string", "utility"], valueLabel: "Amount", min: -99, step: 1 },
   { id: "goldGain", label: "Gain Gold", kinds: ["grass", "food", "scroll", "string", "utility"], valueLabel: "Gold", min: -9999, step: 1 },
   { id: "negateTraps", label: "Negate Traps", kinds: ["bracelet", "grass", "food", "scroll", "string", "utility"], valueLabel: "On", min: 1, step: 1, booleanValue: true, extraLabel: "Turns", extraMin: 0, extraStep: 1, defaultExtra: 12 },
+  { id: "shopDiscount", label: "Haggling", kinds: ["bracelet"], valueLabel: "% Off", min: 1, step: 1 },
+  { id: "trapmore", label: "Trapmore", kinds: ["bracelet"], valueLabel: "Turns", min: 1, step: 1 },
+  { id: "monstercall", label: "Monstercall", kinds: ["bracelet"], valueLabel: "Respawn %", min: 1, step: 1 },
+  { id: "goldLosing", label: "Gold-losing", kinds: ["bracelet"], valueLabel: "Turns", min: 1, step: 1, extraLabel: "Gold", extraMin: 1, extraStep: 1, defaultExtra: 20 },
+  { id: "itemLosing", label: "Item-losing", kinds: ["bracelet"], valueLabel: "Turns", min: 1, step: 1 },
+  { id: "tiptoe", label: "Tiptoe", kinds: ["bracelet"], valueLabel: "On", min: 1, step: 1, booleanValue: true },
+  { id: "wallPass", label: "Wallpass", kinds: ["bracelet"], valueLabel: "Wall %HP", min: 1, step: 1 },
+  { id: "daredevil", label: "Daredevil", kinds: ["bracelet"], valueLabel: "Crit %", min: 1, step: 1, extraLabel: "Multiplier", extraMin: 1, extraStep: 0.1, defaultExtra: 1.5 },
+  { id: "cursebreak", label: "Cursebreak", kinds: ["bracelet"], valueLabel: "On", min: 1, step: 1, booleanValue: true },
+  { id: "rustproof", label: "Rustproof", kinds: ["bracelet"], valueLabel: "On", min: 1, step: 1, booleanValue: true },
+  { id: "fortune", label: "Fortune", kinds: ["bracelet"], valueLabel: "XP/Turn", min: 1, step: 1 },
+  { id: "strengthBonus", label: "Strength", kinds: ["bracelet"], valueLabel: "Atk+", min: -99, step: 1 },
   { id: "uncurse", label: "Uncurse Items", kinds: ["scroll", "string", "grass", "food", "utility"], valueLabel: "Count", min: 1, step: 1 },
   { id: "upgradeSword", label: "Upgrade Sword", kinds: ["scroll", "string", "grass", "food", "utility"], valueLabel: "Amount", min: 1, step: 1 },
   { id: "downgradeSword", label: "Downgrade Sword", kinds: ["scroll", "string", "grass", "food", "utility"], valueLabel: "Amount", min: 1, step: 1 },
@@ -2250,6 +2277,65 @@ function getItemEffectDefinition(effectType = "heal") {
 
 function getAllowedItemEffectDefinitions(kind = "grass") {
   return itemEffectDefinitions.filter((definition) => definition.kinds.includes(kind));
+}
+
+function getItemEffectTooltip(effectType = "heal") {
+  switch (effectType) {
+    case "heal":
+      return "Restores HP when the item is used.";
+    case "attackBuff":
+      return "Temporarily raises attack for the chosen number of turns.";
+    case "defenseBuff":
+      return "Temporarily raises defense for the chosen number of turns.";
+    case "hungerFill":
+      return "Restores hunger immediately.";
+    case "maxHpBonus":
+      return "Raises or lowers max HP while the bracelet is equipped, or permanently if used by a consumable effect.";
+    case "maxHungerBonus":
+      return "Raises or lowers max hunger while the bracelet is equipped, or permanently if used by a consumable effect.";
+    case "goldGain":
+      return "Immediately gives gold when the item is used.";
+    case "negateTraps":
+      return "Negates trap activation. On bracelets it is always active; on consumables it lasts for a duration.";
+    case "shopDiscount":
+      return "Lowers shop purchase prices by the chosen percent while equipped.";
+    case "trapmore":
+      return "Creates a new trap somewhere in the dungeon every set number of turns while equipped.";
+    case "monstercall":
+      return "Speeds up monster respawn by the chosen percent while equipped.";
+    case "goldLosing":
+      return "Every set number of walking steps, you drop the chosen amount of gold nearby.";
+    case "itemLosing":
+      return "Every set number of walking steps, you drop a random carried item nearby.";
+    case "tiptoe":
+      return "Unspotted monsters do not wake just because you walk next to them or enter their room.";
+    case "wallPass":
+      return "Lets you move through walls, but you take the chosen percent of max HP as damage each turn spent inside a wall.";
+    case "daredevil":
+      return "Gives both player and enemies a chance to land critical hits at the chosen multiplier.";
+    case "cursebreak":
+      return "Prevents equipped items from becoming cursed while the bracelet is equipped.";
+    case "rustproof":
+      return "Prevents equipped weapon and shield upgrade values from decreasing while the bracelet is equipped.";
+    case "fortune":
+      return "Grants the chosen amount of experience each turn while the bracelet is equipped.";
+    case "strengthBonus":
+      return "Raises the player's current attack power while the bracelet is equipped.";
+    case "uncurse":
+      return "Removes curses from items.";
+    case "upgradeSword":
+      return "Raises a sword's upgrade value.";
+    case "downgradeSword":
+      return "Lowers a sword's upgrade value.";
+    case "upgradeShield":
+      return "Raises a shield's upgrade value.";
+    case "downgradeShield":
+      return "Lowers a shield's upgrade value.";
+    case "clearTraps":
+      return "Removes traps from the floor.";
+    default:
+      return "No tooltip written yet for this effect.";
+  }
 }
 
 function makeDefaultItemEffect(kind = "grass") {
@@ -2535,6 +2621,7 @@ function getItemCategoryIdFromRule(rule) {
 
 function renderItemEffectRow(effect, kind, index) {
   const definition = getItemEffectDefinition(effect.type);
+  const tooltip = escapeHtml(getItemEffectTooltip(effect.type));
   const options = getAllowedItemEffectDefinitions(kind).map((entry) => (
     `<option value="${escapeHtml(entry.id)}"${entry.id === effect.type ? " selected" : ""}>${escapeHtml(entry.label)}</option>`
   )).join("");
@@ -2551,14 +2638,14 @@ function renderItemEffectRow(effect, kind, index) {
        </label>`
     : "";
   return `
-    <div class="item-effect-row" data-effect-index="${index}">
+    <div class="item-effect-row" data-effect-index="${index}" title="${tooltip}">
       <label class="inline-check">
         <input type="checkbox" data-target="effectEnabled"${effect.enabled ? " checked" : ""} />
         On
       </label>
-      <label class="item-pool-select">
+      <label class="item-pool-select" title="${tooltip}">
         <span>Effect</span>
-        <select data-target="effectType">${options}</select>
+        <select data-target="effectType" title="${tooltip}">${options}</select>
       </label>
       ${valueInput}
       ${extraInput}
@@ -8207,6 +8294,10 @@ function applyEnemyMagicEffect(monster, skill) {
       log(`${monster.name}'s magic lowers your base attack by ${amount}.`);
       return;
     case "curseEquipped":
+      if (playerHasCursebreakBracelet()) {
+        log(`${monster.name}'s magic sputters against your Cursebreak Bracelet.`);
+        return;
+      }
       ["leftHand", "rightHand", "bracelet1", "bracelet2"].forEach((slot) => {
         if (game.equipment[slot]) {
           game.equipment[slot].cursed = true;
@@ -8302,6 +8393,9 @@ function applyMonsterAttackSideEffects(monster, hitDamage = 0, distance = 1) {
   }
   const curseEquipped = getMonsterSkill(monster, "curseEquipped");
   if (curseEquipped && enemySkillTriggers(curseEquipped)) {
+    if (playerHasCursebreakBracelet()) {
+      log(`${monster.name}'s curse fails to take hold.`);
+    } else {
     ["leftHand", "rightHand", "bracelet1", "bracelet2"].forEach((slot) => {
       if (game.equipment[slot]) {
         game.equipment[slot].cursed = true;
@@ -8309,6 +8403,7 @@ function applyMonsterAttackSideEffects(monster, hitDamage = 0, distance = 1) {
       }
     });
     log(`${monster.name} curses your equipped items.`);
+    }
   }
   const downgradeWeapons = getMonsterSkill(monster, "downgradeEquippedWeapon");
   if (downgradeWeapons && enemySkillTriggers(downgradeWeapons)) {
@@ -9190,7 +9285,12 @@ function removeEntitiesInRoom(collection, room, predicate = () => true) {
 }
 
 function getShopPrice(entry) {
-  return getEntryBuyValue(entry);
+  const basePrice = getEntryBuyValue(entry);
+  const discountPercent = Math.max(0, Math.min(95, getBraceletEffectMaxValue("shopDiscount", 0)));
+  if (discountPercent <= 0) {
+    return basePrice;
+  }
+  return Math.max(1, Math.ceil(basePrice * (1 - (discountPercent / 100))));
 }
 
 function getRoomInteriorTiles(room) {
@@ -9468,6 +9568,7 @@ function startRun(recipe = readRecipe(), publishedId = null) {
   game.logEventCounter = 0;
   game.playerHitStreak = 0;
   game.playerMissStreak = 0;
+  game.playerWalkSteps = 0;
   game.processingTurn = false;
   game.lastRunLogDividerTurn = null;
   game.inventory = normalizeStartingInventory(recipe)
@@ -9826,7 +9927,7 @@ function summarizeCurrentEnvironmentalEffect() {
 function getPlayerAttack() {
   const hands = getEquippedItems(["leftHand", "rightHand"]);
   const buffAttack = game.buffs.reduce((total, buff) => total + (buff.attack || 0), 0);
-  return (game.recipe?.startingStats?.attack ?? 2) + (game.levelBonuses?.attack ?? 0) + (game.permanentBonuses?.attack ?? 0) + hands.reduce((total, item) => total + getEffectiveStat(item, "attack"), 0) + buffAttack;
+  return (game.recipe?.startingStats?.attack ?? 2) + (game.levelBonuses?.attack ?? 0) + (game.permanentBonuses?.attack ?? 0) + getBraceletStrengthBonus() + hands.reduce((total, item) => total + getEffectiveStat(item, "attack"), 0) + buffAttack;
 }
 
 function getPlayerAccuracy() {
@@ -9932,6 +10033,79 @@ function hasEquippedEffect(effectKey) {
   return getEquippedItems(["leftHand", "rightHand", "bracelet1", "bracelet2"])
     .some((item) => item[effectKey] || getItemEffects(item).some((effect) => effect.enabled && effect.type === effectKey))
     || game.buffs.some((buff) => Boolean(buff?.[effectKey]));
+}
+
+function getEquippedBraceletEntries() {
+  return ["bracelet1", "bracelet2"]
+    .map((slot) => ({ slot, entry: game.equipment[slot], item: getItemWithInstance(game.equipment[slot]) }))
+    .filter(({ item }) => item?.kind === "bracelet");
+}
+
+function getEquippedBraceletEffectEntries(effectType = null) {
+  return getEquippedBraceletEntries()
+    .flatMap(({ slot, entry, item }) => (
+      getItemEffects(item)
+        .filter((effect) => effect.enabled)
+        .map((effect) => ({ slot, entry, item, effect }))
+    ))
+    .filter(({ effect }) => !effectType || effect.type === effectType);
+}
+
+function getBraceletEffectMaxValue(effectType, fallback = 0) {
+  const values = getEquippedBraceletEffectEntries(effectType)
+    .map(({ effect }) => Number(effect.value ?? fallback))
+    .filter((value) => Number.isFinite(value));
+  return values.length > 0 ? Math.max(...values) : fallback;
+}
+
+function getBraceletEffectMinValue(effectType, fallback = 0) {
+  const values = getEquippedBraceletEffectEntries(effectType)
+    .map(({ effect }) => Number(effect.value ?? fallback))
+    .filter((value) => Number.isFinite(value));
+  return values.length > 0 ? Math.min(...values) : fallback;
+}
+
+function getBraceletEffectMaxExtra(effectType, fallback = 0) {
+  const values = getEquippedBraceletEffectEntries(effectType)
+    .map(({ effect }) => Number(effect.extra ?? fallback))
+    .filter((value) => Number.isFinite(value));
+  return values.length > 0 ? Math.max(...values) : fallback;
+}
+
+function playerHasTiptoeBracelet() {
+  return getEquippedBraceletEffectEntries("tiptoe").length > 0;
+}
+
+function playerCanWallPass() {
+  return getEquippedBraceletEffectEntries("wallPass").length > 0;
+}
+
+function getWallPassPercent() {
+  return Math.max(1, getBraceletEffectMinValue("wallPass", 4));
+}
+
+function getMonstercallRespawnMultiplier() {
+  const boostPercent = getBraceletEffectMaxValue("monstercall", 0);
+  return 1 + Math.max(0, boostPercent) / 100;
+}
+
+function getDaredevilCritProfile() {
+  const chance = getBraceletEffectMaxValue("daredevil", 0);
+  const multiplier = Math.max(1, getBraceletEffectMaxExtra("daredevil", 1.5));
+  return { chance, multiplier };
+}
+
+function playerHasCursebreakBracelet() {
+  return getEquippedBraceletEffectEntries("cursebreak").length > 0;
+}
+
+function playerHasBraceletRustproof() {
+  return getEquippedBraceletEffectEntries("rustproof").length > 0;
+}
+
+function getBraceletStrengthBonus() {
+  return getEquippedBraceletEffectEntries("strengthBonus")
+    .reduce((sum, { effect }) => sum + Number(effect.value || 0), 0);
 }
 
 function getRarityMultiplier(item) {
@@ -10183,6 +10357,10 @@ function resolvePlayerRuneHitEffects(baseDamage, target = null) {
       criticalMultiplier = Math.max(criticalMultiplier, rule.critMultiplier);
     }
   });
+  const daredevil = getDaredevilCritProfile();
+  if (daredevil.chance > 0 && Math.random() * 100 < daredevil.chance) {
+    criticalMultiplier = Math.max(criticalMultiplier, daredevil.multiplier);
+  }
   antiMonsterRunes.forEach(({ rule }) => {
     antiMonsterMultiplier = Math.max(antiMonsterMultiplier, Number(rule.bonusMultiplier ?? 1));
   });
@@ -10693,7 +10871,7 @@ function renderFloorItemPanel() {
   const floorActionLabel = floorItem.pendingSale
     ? "Take Back"
     : floorItem.shopPrice
-    ? `Buy ${floorItem.shopPrice}g`
+    ? `Buy ${getShopPrice(floorItem)}g`
     : floorItemDef?.kind === "scroll"
       ? "Read"
       : "Use";
@@ -10977,13 +11155,14 @@ function buyShopFloorItem(entry) {
   if (!entry?.shopPrice) {
     return false;
   }
+  const price = getShopPrice(entry);
   if (activeEffectIs("noPickup", "player")) {
     log("The environmental effect prevents you from buying items.");
     render();
     return false;
   }
-  if (game.gold < entry.shopPrice) {
-    log(`${getVisibleItemName(entry)} costs ${entry.shopPrice} gold, but you only have ${game.gold}.`);
+  if (game.gold < price) {
+    log(`${getVisibleItemName(entry)} costs ${price} gold, but you only have ${game.gold}.`);
     render();
     return false;
   }
@@ -10992,7 +11171,7 @@ function buyShopFloorItem(entry) {
     render();
     return false;
   }
-  game.gold -= entry.shopPrice;
+  game.gold -= price;
   playSoundEffect("shopBuy");
   const itemIndex = game.items.indexOf(entry);
   if (itemIndex >= 0) {
@@ -11005,7 +11184,7 @@ function buyShopFloorItem(entry) {
   game.inventory.push(purchased);
   trackRunStat("itemsPickedUp");
   trackGoalObtain(purchased.itemId);
-  log(`Bought ${getVisibleItemName(purchased)} for ${entry.shopPrice} gold.`);
+  log(`Bought ${getVisibleItemName(purchased)} for ${price} gold.`);
   logDeductionHint(purchased);
   blockPassiveHealThisTurn(passiveHealRules.pickupExchange);
   checkCustomGoalCompletion();
@@ -11233,7 +11412,7 @@ function getItemIcon(item) {
 function makeItemSummary(entry, label = "") {
   const item = getItemWithInstance(entry);
   const wrapper = document.createElement("div");
-  const stats = [getVisibleItemDescription(entry), entry?.shopPrice ? `Price ${entry.shopPrice} gold` : ""].filter(Boolean).join(", ");
+  const stats = [getVisibleItemDescription(entry), entry?.shopPrice ? `Price ${getShopPrice(entry)} gold` : ""].filter(Boolean).join(", ");
   const title = document.createElement("strong");
   title.textContent = getVisibleItemName(entry);
   appendItemStatusIcons(title, entry);
@@ -11318,7 +11497,7 @@ function makeEquippedItemSummary(entry, slot) {
   }
 
   const description = document.createElement("p");
-  description.textContent = [getVisibleItemDescription(entry), entry?.shopPrice ? `Price ${entry.shopPrice} gold` : ""].filter(Boolean).join(", ");
+  description.textContent = [getVisibleItemDescription(entry), entry?.shopPrice ? `Price ${getShopPrice(entry)} gold` : ""].filter(Boolean).join(", ");
   wrapper.append(description);
   return wrapper;
 }
@@ -11500,6 +11679,36 @@ function describeItem(item) {
   if (item.maxHungerBonus) {
     parts.push(`Max Hunger +${item.maxHungerBonus}`);
   }
+  getItemEffects(item).forEach((effect) => {
+    if (!effect.enabled) {
+      return;
+    }
+    if (effect.type === "shopDiscount") {
+      parts.push(`Shop prices -${effect.value}%`);
+    } else if (effect.type === "trapmore") {
+      parts.push(`Spawns new traps every ${effect.value} turns`);
+    } else if (effect.type === "monstercall") {
+      parts.push(`Monster respawn +${effect.value}%`);
+    } else if (effect.type === "goldLosing") {
+      parts.push(`Drops ${effect.extra || 20} gold every ${effect.value} steps`);
+    } else if (effect.type === "itemLosing") {
+      parts.push(`Drops an item every ${effect.value} steps`);
+    } else if (effect.type === "tiptoe") {
+      parts.push("Sleeping monsters do not wake from movement");
+    } else if (effect.type === "wallPass") {
+      parts.push(`Move through walls, take ${effect.value}% max HP inside`);
+    } else if (effect.type === "daredevil") {
+      parts.push(`${effect.value}% crit chance for everyone at x${effect.extra || 1.5}`);
+    } else if (effect.type === "cursebreak") {
+      parts.push("Prevents items from becoming cursed");
+    } else if (effect.type === "rustproof") {
+      parts.push("Stops equipped gear from losing upgrade value");
+    } else if (effect.type === "fortune") {
+      parts.push(`Gain ${effect.value} XP each turn`);
+    } else if (effect.type === "strengthBonus") {
+      parts.push(`Attack +${effect.value}`);
+    }
+  });
   if (item.scrollEffect === "uncurse") {
     parts.push(`Dispels ${item.scrollAmount ?? 1} curse${(item.scrollAmount ?? 1) === 1 ? "" : "s"}`);
   }
@@ -11608,7 +11817,7 @@ function getInventoryOnlyEntries() {
 
 function applyUpgradeToEntry(entry, amount = 1, minimum = 0, maximum = MAX_ITEM_UPGRADE) {
   const current = clampUpgradeValue(entry.upgradeLevel, minimum, maximum);
-  if (amount < 0 && itemHasRuneEffect(entry, "rustproof")) {
+  if (amount < 0 && (itemHasRuneEffect(entry, "rustproof") || playerHasBraceletRustproof())) {
     return 0;
   }
   const next = clampUpgradeValue(current + amount, minimum, maximum);
@@ -11970,7 +12179,7 @@ function respawnMonsters() {
     return;
   }
 
-  const respawnRate = Math.max(0, game.recipe.monsterRespawnRate ?? 0);
+  const respawnRate = Math.max(0, game.recipe.monsterRespawnRate ?? 0) * getMonstercallRespawnMultiplier();
   const monsterCap = Math.max(1, game.recipe.monsterLimit ?? 12);
   if (respawnRate <= 0 || game.monsters.length >= monsterCap) {
     game.monsterRespawnCharge = Math.min(game.monsterRespawnCharge ?? 0, 0.99);
@@ -12009,16 +12218,157 @@ function respawnMonsters() {
   game.monsterRespawnCharge = Math.max(0, game.monsterRespawnCharge - 1);
 }
 
+function trySpawnTrapFromBracelet() {
+  const rawInterval = getBraceletEffectMinValue("trapmore", 0);
+  if (rawInterval <= 0) {
+    return false;
+  }
+  const interval = Math.max(1, Math.round(rawInterval));
+  const currentTurn = game.runStats?.turns ?? 0;
+  if (currentTurn <= 0 || currentTurn % interval !== 0) {
+    return false;
+  }
+  const trapRule = chooseTrapRule(game.recipe, Math.random);
+  if (!trapRule) {
+    return false;
+  }
+  const occupied = [game.player, game.exit, ...game.monsters, ...game.items, ...game.traps, ...game.sigils, ...getBossTiles()];
+  const position = randomRoomPosition(Math.random, occupied);
+  if (!position) {
+    return false;
+  }
+  game.traps.push(createTrapInstance(trapRule, position));
+  log(`${trapRule.name} forms elsewhere in the dungeon.`);
+  return true;
+}
+
+function getNearbyDropPosition(origin = game.player) {
+  const maxRadius = Math.max(game.floorWidth, game.floorHeight);
+  for (let radius = 1; radius <= maxRadius; radius += 1) {
+    const candidates = getDropRingAroundOrigin(origin, radius);
+    const openSpot = candidates.find((position) => (
+      game.tiles[position.y]?.[position.x] &&
+      game.tiles[position.y][position.x] !== "wall" &&
+      !game.items.some((item) => item.x === position.x && item.y === position.y)
+    ));
+    if (openSpot) {
+      return openSpot;
+    }
+  }
+  return null;
+}
+
+function dropGoldFromBraceletStep() {
+  const rawInterval = getBraceletEffectMinValue("goldLosing", 0);
+  if (rawInterval <= 0) {
+    return false;
+  }
+  const interval = Math.max(1, Math.round(rawInterval));
+  if ((game.playerWalkSteps ?? 0) <= 0 || game.playerWalkSteps % interval !== 0) {
+    return false;
+  }
+  const amount = Math.min(game.gold, Math.max(1, Math.round(getBraceletEffectMaxExtra("goldLosing", 20))));
+  if (amount <= 0) {
+    return false;
+  }
+  const dropPosition = getNearbyDropPosition(game.player);
+  if (!dropPosition) {
+    return false;
+  }
+  game.gold = Math.max(0, game.gold - amount);
+  game.items.push({
+    ...createItemInstance("goldBundle", false, null, { gold: amount }),
+    x: dropPosition.x,
+    y: dropPosition.y,
+  });
+  log(`Gold-losing drops ${amount} gold as you walk.`);
+  return true;
+}
+
+function dropItemFromBraceletStep() {
+  const rawInterval = getBraceletEffectMinValue("itemLosing", 0);
+  if (rawInterval <= 0) {
+    return false;
+  }
+  const interval = Math.max(1, Math.round(rawInterval));
+  if ((game.playerWalkSteps ?? 0) <= 0 || game.playerWalkSteps % interval !== 0) {
+    return false;
+  }
+  if (!Array.isArray(game.inventory) || game.inventory.length === 0) {
+    return false;
+  }
+  const dropPosition = getNearbyDropPosition(game.player);
+  if (!dropPosition) {
+    return false;
+  }
+  const inventoryIndex = Math.floor(Math.random() * game.inventory.length);
+  const [entry] = game.inventory.splice(inventoryIndex, 1);
+  if (!entry) {
+    return false;
+  }
+  game.items.push({
+    ...entry,
+    x: dropPosition.x,
+    y: dropPosition.y,
+  });
+  log(`Item-losing makes you drop ${getVisibleItemName(entry)}.`);
+  return true;
+}
+
+function processBraceletStepEffects() {
+  dropGoldFromBraceletStep();
+  dropItemFromBraceletStep();
+}
+
+function applyWallPassTurnDamage() {
+  if (!playerCanWallPass() || game.tiles[game.player.y]?.[game.player.x] !== "wall") {
+    return;
+  }
+  const damage = Math.max(1, Math.ceil(getPlayerMaxHp() * (getWallPassPercent() / 100)));
+  game.hp = Math.max(0, game.hp - damage);
+  trackRunStat("damageTaken", damage);
+  log(`Wallpass grinds you for ${damage} damage inside the wall.`);
+  if (game.hp <= 0) {
+    endRun("collapse");
+    log("You collapsed in the dungeon. Generate or load a recipe to retry.");
+  }
+}
+
+function applyFortuneBraceletTurnXp() {
+  const xpAmount = Math.max(0, getBraceletEffectMaxValue("fortune", 0));
+  if (!levelingEnabled() || xpAmount <= 0 || game.ended) {
+    return;
+  }
+  game.xp += xpAmount;
+  trackRunStat("xpEarned", xpAmount);
+  while (game.level < 99) {
+    const nextLevelXp = getNextLevelXp(game.level);
+    if (nextLevelXp === null || game.xp < nextLevelXp) {
+      break;
+    }
+    game.level += 1;
+    trackRunStat("levelsGained");
+    const changes = applyLevelUpStatChanges();
+    log(`Level up! You reached level ${game.level}${changes.length > 0 ? `: ${changes.join(", ")}.` : "."}`);
+  }
+  checkCustomGoalCompletion();
+}
+
 async function advanceTurn(options = {}) {
   game.processingTurn = true;
   trackRunStat("turns");
   await moveMonsters();
   respawnMonsters();
+  trySpawnTrapFromBracelet();
   tickBuffs();
   if (processEnvironmentalTurn(options)) {
     resolveTile();
   }
+  applyFortuneBraceletTurnXp();
   processHungerTurn();
+  if (!game.ended) {
+    applyWallPassTurnDamage();
+  }
   game.passiveHealBlockedThisTurn = false;
   game.processingTurn = false;
   render();
@@ -13168,6 +13518,18 @@ async function tryMove(dx, dy) {
 
   const target = { x: game.player.x + dx, y: game.player.y + dy };
   if (game.tiles[target.y]?.[target.x] === "wall") {
+    if (playerCanWallPass()) {
+      game.player = target;
+      game.playerWalkSteps = (game.playerWalkSteps ?? 0) + 1;
+      processBraceletStepEffects();
+      revealCurrentView();
+      const turnContinues = resolveTile();
+      if (turnContinues) {
+        await advanceTurn({ playerMoved: true });
+      }
+      render();
+      return;
+    }
     if (tryWallDig(dx, dy)) {
       revealCurrentView();
       await advanceTurn();
@@ -13184,6 +13546,8 @@ async function tryMove(dx, dy) {
       await attackMonster(monsterIndex, { dx, dy });
     } else {
       game.player = target;
+      game.playerWalkSteps = (game.playerWalkSteps ?? 0) + 1;
+      processBraceletStepEffects();
     }
   }
 
@@ -13295,11 +13659,13 @@ async function resolvePlayerAttackAgainstTarget(targetDescriptor, hpWasFull = fa
     }
     await playMeleeAttackAnimation(monster, "monster");
     if (!shouldForcePlayerHit() && !rollPlayerHit()) {
+      monster.hasSpottedPlayer = true;
       trackRunStat("attacksMade");
       updatePlayerAttackStreaksOnMiss();
       log(`You miss the ${monster.name}.`);
       return { hit: false, damage: 0 };
     }
+    monster.hasSpottedPlayer = true;
     const runeHit = resolvePlayerRuneHitEffects(applyEnvironmentalDamage(rollDamage(getPlayerAttack(), monster.defense), "enemy"), monster);
     const flameDamage = resolveFlameShotBonus(hpWasFull);
     const swift = resolveSwiftStrikeBonus(runeHit.damage);
@@ -13554,6 +13920,7 @@ async function monsterAttack(monster, distance = 1, attackMode = distance > 1 ? 
   const throwGoldSkill = getMonsterSkill(monster, "throwGold");
   const throwItemSkill = getMonsterSkill(monster, "throwItem");
   const magicSkill = getMonsterSkill(monster, "shootMagic");
+  const daredevil = getDaredevilCritProfile();
 
   for (let hitIndex = 0; hitIndex < hitCount; hitIndex += 1) {
     playSoundEffect("enemyAttack");
@@ -13564,6 +13931,11 @@ async function monsterAttack(monster, distance = 1, attackMode = distance > 1 ? 
     if (criticalSkill && enemySkillTriggers(criticalSkill) && Math.random() * 100 < Number(criticalSkill.value ?? 0)) {
       attackPower = Math.max(1, Math.ceil(attackPower * Number(criticalSkill.extra ?? 1.5)));
       attackLabel = `The ${monster.name} lands a critical hit`;
+      wasCritical = true;
+    }
+    if (!wasCritical && daredevil.chance > 0 && Math.random() * 100 < daredevil.chance) {
+      attackPower = Math.max(1, Math.ceil(attackPower * daredevil.multiplier));
+      attackLabel = `The ${monster.name} lands a daredevil critical hit`;
       wasCritical = true;
     }
     if (distance > 1 && attackMode === "fireBreath" && fireBreath) {
@@ -14007,7 +14379,7 @@ function resolveTile() {
     if (activeEffectIs("noPickup", "player")) {
       log("The environmental effect prevents you from picking up items.");
     } else if (game.items[itemIndex].shopPrice) {
-      log(`${getVisibleItemName(game.items[itemIndex])} is for sale at ${game.items[itemIndex].shopPrice} gold.`);
+      log(`${getVisibleItemName(game.items[itemIndex])} is for sale at ${getShopPrice(game.items[itemIndex])} gold.`);
     } else if (game.items[itemIndex].pendingSale) {
       log(`${getVisibleItemName(game.items[itemIndex])} is waiting in the shop sell position.`);
     } else {
@@ -14123,6 +14495,10 @@ async function performMonsterAction(monster) {
   const manhattanDistance = Math.abs(dxToPlayer) + Math.abs(dyToPlayer);
   const chebyshevDistance = Math.max(Math.abs(dxToPlayer), Math.abs(dyToPlayer));
   const attackRange = getMonsterAttackRange(monster);
+  const monsterRoom = findRoomAt(monster);
+  const playerRoom = findRoomAt(game.player);
+  const sameRoom = Boolean(monsterRoom && playerRoom && monsterRoom.id === playerRoom.id);
+  const isNextToEnemy = chebyshevDistance <= 1;
 
   const hideInWalls = getMonsterSkill(monster, "hideInWalls");
   if (monster.hiddenUntilNear && hideInWalls) {
@@ -14131,6 +14507,10 @@ async function performMonsterAction(monster) {
     }
     monster.hiddenUntilNear = false;
     log(`${monster.name} springs from hiding!`);
+  }
+
+  if (playerHasTiptoeBracelet() && !monster.hasSpottedPlayer && (sameRoom || isNextToEnemy)) {
+    return;
   }
 
   const pullSkill = getMonsterSkill(monster, "pullPlayer");
@@ -14158,10 +14538,6 @@ async function performMonsterAction(monster) {
     return;
   }
 
-  const monsterRoom = findRoomAt(monster);
-  const playerRoom = findRoomAt(game.player);
-  const sameRoom = Boolean(monsterRoom && playerRoom && monsterRoom.id === playerRoom.id);
-  const isNextToEnemy = chebyshevDistance <= 1;
   const canNoticeByRoom = pursuit.whenEntering || pursuit.whenLeaving;
 
   if (sameRoom && canNoticeByRoom) {
