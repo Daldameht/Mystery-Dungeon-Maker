@@ -2,43 +2,6 @@
 
 A tiny browser prototype for a shareable, mystery-dungeon-style creator game.
 
-## Play it
-
-Open `index.html` in a browser. Use arrow keys or WASD to move.
-
-## GitHub Pages
-
-This project is set up well for static hosting on GitHub Pages.
-
-What to upload:
-
-- `index.html`
-- `styles.css`
-- `script.js`
-- `env/`
-- `audio/`
-
-How to publish:
-
-1. Create a new GitHub repository.
-2. Commit and push this folder to the `main` branch.
-3. In the GitHub repository, open `Settings > Pages`.
-4. Set:
-   - `Source`: `Deploy from a branch`
-   - `Branch`: `main`
-   - `Folder`: `/ (root)`
-5. Save and wait for GitHub Pages to deploy the site.
-
-Your published URL will look like:
-
-- `https://YOURNAME.github.io/REPOSITORY-NAME/`
-
-Notes:
-
-- Built-in environment art and default sounds require the `env/` and `audio/` folders to be included in the repository.
-- Browser-local features such as locally published dungeons remain local per player/browser.
-- Full package export/import continues to work on GitHub Pages.
-
 ## Current prototype loop
 
 - Tune dungeon parameters such as floors, rooms per floor, monster rate, monster respawn pressure, monster limit, item rate, trap density, gold bundle size, rare loot, cursed item rate, starting equipment, and starting inventory.
