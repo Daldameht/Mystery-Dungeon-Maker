@@ -235,6 +235,8 @@ const soundEffectDefinitions = [
   { id: "dungeonClear", label: "Dungeon Clear", defaultFileName: "dungeon clear.wav", defaultPath: "./audio/dungeon clear.wav" },
 ];
 const liveSoundEffects = new Set();
+const defaultThemeMusicPath = "./audio/theme.mp3";
+let activeThemeAudio = null;
 
 const itemDefinitions = {
   dagger: { name: "Short Sword", kind: "hand", handType: "sword", attack: 2, rarity: "common", sellValue: 60 },
@@ -858,6 +860,52 @@ function playSoundEffect(soundId, options = {}) {
     }
     return audio;
   } catch {
+    return null;
+  }
+}
+
+function stopThemeMusic() {
+  if (!activeThemeAudio) {
+    return;
+  }
+  try {
+    activeThemeAudio.pause();
+    activeThemeAudio.currentTime = 0;
+  } catch {
+    // Ignore audio shutdown errors.
+  }
+  activeThemeAudio = null;
+}
+
+function startThemeMusic(options = {}) {
+  const source = defaultThemeMusicPath;
+  if (!source) {
+    return null;
+  }
+  const restart = options.restart !== false;
+  if (activeThemeAudio) {
+    if (!restart) {
+      return activeThemeAudio;
+    }
+    stopThemeMusic();
+  }
+  try {
+    const audio = new Audio(source);
+    audio.preload = "auto";
+    audio.loop = true;
+    audio.volume = clampNumber(options.volume ?? 0.42, 0, 1, 0.42);
+    activeThemeAudio = audio;
+    const playback = audio.play();
+    if (playback && typeof playback.catch === "function") {
+      playback.catch(() => {
+        if (activeThemeAudio === audio) {
+          activeThemeAudio = null;
+        }
+      });
+    }
+    return audio;
+  } catch {
+    activeThemeAudio = null;
     return null;
   }
 }
@@ -9400,6 +9448,7 @@ function populateFloor() {
 
 function startRun(recipe = readRecipe(), publishedId = null) {
   recipe = normalizeRecipeData(recipe);
+  stopThemeMusic();
   setRecipeExtended(false);
   const loadoutError = validateStartingLoadout(recipe);
   if (loadoutError) {
@@ -9460,6 +9509,7 @@ function startRun(recipe = readRecipe(), publishedId = null) {
   shareCode.value = encodeRecipe(recipe);
   logList.innerHTML = "";
   log(`Started "${recipe.name}" with ${recipe.floors} floors.`);
+  startThemeMusic();
   generateFloor();
   checkCustomGoalCompletion();
   return true;
@@ -9515,6 +9565,7 @@ function endRun(result) {
   }
 
   game.ended = true;
+  stopThemeMusic();
   if (result === "clear") {
     playSoundEffect("dungeonClear");
   } else if (result === "collapse") {
