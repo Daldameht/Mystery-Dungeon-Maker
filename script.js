@@ -1422,7 +1422,7 @@ function normalizeRecipeData(recipe = {}) {
     customEnvironmentLibrary,
     customEnvironment: customEnvironmentLibrary[0] ?? normalizeCustomEnvironment(recipe?.customEnvironment),
     startingStats: normalizeStartingStats(recipe),
-    leveling: normalizeLevelingSettings(recipe?.leveling),
+    leveling: normalizeLevelingSettings({ leveling: recipe?.leveling }),
     customGoal: normalizeCustomGoal(recipe?.customGoal),
     runLogSettings: normalizeRunLogSettings(recipe?.runLogSettings),
     environmentalEffects: normalizeEnvironmentalEffects(recipe?.environmentalEffects),
