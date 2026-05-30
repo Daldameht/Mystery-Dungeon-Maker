@@ -1173,6 +1173,18 @@ function readCustomEnvironmentLibrary() {
   );
 }
 
+function prioritizeHighlightedRow(rules = [], highlightedId = "") {
+  if (!highlightedId) {
+    return Array.isArray(rules) ? [...rules] : [];
+  }
+  const entries = Array.isArray(rules) ? [...rules] : [];
+  const highlightedIndex = entries.findIndex((rule) => rule?.id === highlightedId);
+  if (highlightedIndex <= 0) {
+    return entries;
+  }
+  return [entries[highlightedIndex], ...entries.slice(0, highlightedIndex), ...entries.slice(highlightedIndex + 1)];
+}
+
 function highlightDungeonBuilderRow(container, rowClassName, dataAttributeName, rowId, focusSelector) {
   if (!container || !rowId) {
     return;
@@ -1293,7 +1305,8 @@ function renderEnvironmentStageControls(rules = undefined, recipe = null) {
   });
   const options = getEnvironmentSelectOptions({ ...recipe, customEnvironmentLibrary });
   environmentStageList.innerHTML = "";
-  normalizedRules.forEach((rule, index) => {
+  prioritizeHighlightedRow(normalizedRules, highlightedEnvironmentStageId).forEach((rule) => {
+    const index = normalizedRules.findIndex((entry) => entry.id === rule.id);
     const row = document.createElement("div");
     row.className = "environment-stage-row";
     row.dataset.stageId = rule.id;
@@ -1350,7 +1363,7 @@ function addEnvironmentStageRule() {
     recipe: { customEnvironmentLibrary: readCustomEnvironmentLibrary() },
   });
   highlightedEnvironmentStageId = newRule.id;
-  rules.push(newRule);
+  rules.unshift(newRule);
   renderEnvironmentStageControls(rules, { customEnvironmentLibrary: readCustomEnvironmentLibrary(), floors });
 }
 
@@ -1361,7 +1374,7 @@ function addCustomEnvironmentEntry() {
     name: `Custom Area ${library.length + 1}`,
   });
   highlightedCustomEnvironmentId = newEntry.id;
-  library.push(newEntry);
+  library.unshift(newEntry);
   renderCustomEnvironmentLibrary(library);
 }
 
@@ -1590,7 +1603,12 @@ function normalizeRarityRules(rules = []) {
 
 function renderRarityControls(rules = readRarityRules()) {
   rarityList.innerHTML = "";
-  normalizeRarityRules(rules).forEach((rule) => {
+  const normalizedRules = normalizeRarityRules(rules);
+  const orderedRules = [
+    ...normalizedRules.filter((rule) => !rule.locked),
+    ...normalizedRules.filter((rule) => rule.locked),
+  ];
+  orderedRules.forEach((rule) => {
     const card = document.createElement("div");
     card.className = "rarity-card";
     card.dataset.rarityId = rule.id;
@@ -1634,7 +1652,7 @@ function renderRarityControls(rules = readRarityRules()) {
 
 function readRarityRules() {
   return Array.from(rarityList.querySelectorAll(".rarity-card")).map((card, index) => {
-    const defaultRule = defaultRarityRules[index] ?? makeDefaultRarityRule(index);
+    const defaultRule = defaultRarityRules.find((rule) => rule.id === card.dataset.rarityId) ?? makeDefaultRarityRule(index);
     return normalizeRarityRule({
       id: card.dataset.rarityId,
       name: card.querySelector('[data-target="name"]')?.value ?? defaultRule.name,
@@ -1676,7 +1694,7 @@ function refreshRarityEditorState() {
 
 function addRarityRule() {
   const rules = readRarityRules();
-  rules.push(makeDefaultRarityRule(rules.length));
+  rules.unshift(makeDefaultRarityRule(rules.length));
   renderRarityControls(rules);
   refreshRarityEditorState();
 }
@@ -1885,7 +1903,7 @@ function renderTrapPoolControls(rules = undefined) {
 
 function readTrapPoolRules() {
   return Array.from(trapPoolList.querySelectorAll(".trap-row")).map((row, index) => {
-    const fallback = defaultTrapRules[index] ?? makeDefaultTrapRule(index);
+    const fallback = defaultTrapRules.find((rule) => rule.id === row.dataset.trapId) ?? makeDefaultTrapRule(index);
     return normalizeTrapRule({
       id: row.dataset.trapId,
       name: row.querySelector('[data-target="name"]')?.value,
@@ -1963,7 +1981,7 @@ function refreshTrapEditorState() {
 
 function addTrapRule() {
   const rules = readTrapPoolRules();
-  rules.push(makeDefaultTrapRule(rules.length));
+  rules.unshift(makeDefaultTrapRule(rules.length));
   renderTrapPoolControls(rules);
 }
 
@@ -2148,7 +2166,7 @@ function renderSigilPoolControls(rules = undefined) {
 
 function readSigilPoolRules() {
   return Array.from(sigilPoolList.querySelectorAll(".sigil-row")).map((row, index) => {
-    const fallback = defaultSigilRules[index] ?? makeDefaultSigilRule(index);
+    const fallback = defaultSigilRules.find((rule) => rule.id === row.dataset.sigilId) ?? makeDefaultSigilRule(index);
     return normalizeSigilRule({
       id: row.dataset.sigilId,
       name: row.querySelector('[data-target="name"]')?.value,
@@ -2224,7 +2242,7 @@ function refreshSigilEditorState() {
 
 function addSigilRule() {
   const rules = readSigilPoolRules();
-  rules.push(makeDefaultSigilRule(rules.length));
+  rules.unshift(makeDefaultSigilRule(rules.length));
   renderSigilPoolControls(rules);
 }
 
@@ -2943,7 +2961,7 @@ function applyItemPoolRules(rules = undefined) {
 
 function addItemPoolEntry(categoryId) {
   const rules = normalizeItemPoolRules(readItemPoolRules());
-  rules.push(makeDefaultItemRule(categoryId));
+  rules.unshift(makeDefaultItemRule(categoryId));
   renderItemPoolControls(rules);
 }
 
@@ -2953,7 +2971,7 @@ function addItemEffectRow(itemId) {
   if (!rule) {
     return;
   }
-  rule.effects = [...getItemRuleEffects(rule), makeDefaultItemEffect(rule.kind)];
+  rule.effects = [makeDefaultItemEffect(rule.kind), ...getItemRuleEffects(rule)];
   renderItemPoolControls(rules);
 }
 
@@ -3423,7 +3441,7 @@ function applySpecialAttackRules(rules = undefined) {
 
 function addSpecialAttackRule() {
   const rules = normalizeSpecialAttackRules(readSpecialAttackRules());
-  rules.push(normalizeSpecialAttackRule({
+  rules.unshift(normalizeSpecialAttackRule({
     id: makeId("specialAttack"),
     name: `Special Attack ${rules.length + 1}`,
     enabled: true,
@@ -3894,7 +3912,7 @@ function applyRunePoolRules(rules = undefined) {
 
 function addRuneRule() {
   const rules = normalizeRunePoolRules(readRunePoolRules());
-  rules.push(normalizeRuneRule({ id: makeId("rune"), name: "Custom Rune", effectType: "critical", enabled: true, critChance: 25, critMultiplier: 1.5 }));
+  rules.unshift(normalizeRuneRule({ id: makeId("rune"), name: "Custom Rune", effectType: "critical", enabled: true, critChance: 25, critMultiplier: 1.5 }));
   renderRunePoolControls(rules);
 }
 
@@ -4371,7 +4389,7 @@ function applyEnemyTypeRules(rules = undefined) {
 
 function addEnemyTypeRule() {
   const rules = normalizeEnemyTypeRules(readEnemyTypeRules());
-  rules.push(makeDefaultEnemyTypeRule());
+  rules.unshift(makeDefaultEnemyTypeRule());
   renderEnemyTypeControls(rules);
 }
 
@@ -4589,7 +4607,7 @@ function applyEnemyDropSettings(settings = {}) {
 
 function addEnemyFamily() {
   const rules = normalizeEnemyPoolRules(readEnemyPoolRules());
-  rules.push(makeDefaultEnemyFamilyRule());
+  rules.unshift(makeDefaultEnemyFamilyRule());
   renderEnemyPoolControls(rules);
 }
 
@@ -15366,7 +15384,7 @@ levelingTableBody.addEventListener("input", () => {
 });
 
 bossAttackAddButton.addEventListener("click", () => {
-  bossAttackList.append(createBossSpecialAttackRow({
+  const newRow = createBossSpecialAttackRow({
     id: `bossAttack${bossAttackList.children.length + 1}`,
     name: `Special Attack ${bossAttackList.children.length + 1}`,
     enabled: true,
@@ -15374,7 +15392,15 @@ bossAttackAddButton.addEventListener("click", () => {
     cooldown: 3,
     range: 3,
     notes: "",
-  }));
+  });
+  bossAttackList.prepend(newRow);
+  const nameInput = newRow.querySelector('[data-target="name"]');
+  if (nameInput && typeof nameInput.focus === "function") {
+    nameInput.focus();
+    if (typeof nameInput.select === "function") {
+      nameInput.select();
+    }
+  }
   syncBossRoomRecipeFromControls();
 });
 
@@ -15758,7 +15784,7 @@ enemyPoolList.addEventListener("click", (event) => {
     const family = rules.find((entry) => entry.familyId === familyId);
     const level = family?.levels?.find((entry) => entry.level === levelNumber);
     if (level) {
-      level.skills = [...normalizeEnemySkills(level.skills), normalizeEnemySkill({ type: enemySkillDefinitions[0].id }, {})];
+      level.skills = [normalizeEnemySkill({ type: enemySkillDefinitions[0].id }, {}), ...normalizeEnemySkills(level.skills)];
       renderEnemyPoolControls(rules);
     }
     updateEnemyFamilySummaries();
