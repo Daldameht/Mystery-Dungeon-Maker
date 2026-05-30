@@ -2952,6 +2952,14 @@ h2 {
   flex: 0 0 2.5rem;
 }
 
+.item-pool-stat input[data-target="sellValue"],
+.item-pool-stat input[data-target="buyValue"] {
+  width: 4.75rem !important;
+  min-width: 4.75rem;
+  max-width: 4.75rem;
+  flex-basis: 4.75rem;
+}
+
 .item-pool-select {
   display: inline-flex;
   align-items: center;
