@@ -2266,6 +2266,10 @@ const itemEffectDefinitions = [
   { id: "attackBuff", label: "Attack Buff", kinds: ["food", "scroll", "string", "utility"], valueLabel: "Atk+", min: -99, step: 1, extraLabel: "Turns", extraMin: 0, extraStep: 1, defaultExtra: 12 },
   { id: "defenseBuff", label: "Defense Buff", kinds: ["food", "scroll", "string", "utility"], valueLabel: "Def+", min: -99, step: 1, extraLabel: "Turns", extraMin: 0, extraStep: 1, defaultExtra: 12 },
   { id: "hungerFill", label: "Restore Hunger", kinds: ["food", "scroll", "string", "utility"], valueLabel: "Hunger", min: 0, step: 1 },
+  { id: "foodMaxHungerAtFull", label: "When Full Hunger, Increase Max Hunger", kinds: ["food"], valueLabel: "Max Hunger+", min: 1, step: 1 },
+  { id: "foodRestoreAllHunger", label: "Restore All Hunger", kinds: ["food"], valueLabel: "On", min: 1, step: 1, booleanValue: true },
+  { id: "foodSelfDamage", label: "Take Damage", kinds: ["food"], valueLabel: "Damage", min: 1, step: 1 },
+  { id: "foodFartWarp", label: "Teleport Room Enemies Due To Farts", kinds: ["food"], valueLabel: "On", min: 1, step: 1, booleanValue: true },
   { id: "maxHpBonus", label: "Max HP", kinds: ["bracelet", "food", "scroll", "string", "utility"], valueLabel: "Amount", min: -99, step: 1 },
   { id: "maxHungerBonus", label: "Max Hunger", kinds: ["bracelet", "food", "scroll", "string", "utility"], valueLabel: "Amount", min: -99, step: 1 },
   { id: "goldGain", label: "Gain Gold", kinds: ["food", "scroll", "string", "utility"], valueLabel: "Gold", min: -9999, step: 1 },
@@ -2359,6 +2363,14 @@ function getItemEffectTooltip(effectType = "heal") {
       return "Temporarily raises defense for the chosen number of turns.";
     case "hungerFill":
       return "Restores hunger immediately.";
+    case "foodMaxHungerAtFull":
+      return "If hunger is currently full, raises max hunger by the chosen amount.";
+    case "foodRestoreAllHunger":
+      return "Restores hunger all the way to the current maximum.";
+    case "foodSelfDamage":
+      return "Deals the chosen amount of damage to the player when eaten.";
+    case "foodFartWarp":
+      return "Teleports every enemy in the current room somewhere else on the floor.";
     case "maxHpBonus":
       return "Raises or lowers max HP while the bracelet is equipped, or permanently if used by a consumable effect.";
     case "maxHungerBonus":
@@ -11909,6 +11921,14 @@ function describeItem(item) {
       parts.push(`Level +${effect.value}`);
     } else if (effect.type === "grassLevelDown") {
       parts.push(`Level -${effect.value}`);
+    } else if (effect.type === "foodMaxHungerAtFull") {
+      parts.push(`At full hunger, max hunger +${effect.value}`);
+    } else if (effect.type === "foodRestoreAllHunger") {
+      parts.push("Restores all hunger");
+    } else if (effect.type === "foodSelfDamage") {
+      parts.push(`Deals ${effect.value} damage to you`);
+    } else if (effect.type === "foodFartWarp") {
+      parts.push("Teleports all room enemies elsewhere");
     } else if (effect.type === "shopDiscount") {
       parts.push(`Shop prices -${effect.value}%`);
     } else if (effect.type === "trapmore") {
@@ -13170,6 +13190,33 @@ function applyConsumableEffects(entry, item, options = {}) {
     }
     return true;
   };
+  const warpRoomEnemiesAway = () => {
+    const room = findRoomAt(game.player);
+    if (!room) {
+      log(`${sourceName} rumbles, but there is no roomful of enemies to scatter.`);
+      return false;
+    }
+    let moved = 0;
+    game.monsters.forEach((monster) => {
+      if (!pointInRoom(monster, room)) {
+        return;
+      }
+      const occupied = [game.player, game.exit, ...game.monsters.filter((other) => other !== monster), ...game.items, ...game.traps, ...getBossTiles()];
+      const destination = randomRoomPosition(Math.random, occupied);
+      if (!destination || (destination.x === monster.x && destination.y === monster.y)) {
+        return;
+      }
+      monster.x = destination.x;
+      monster.y = destination.y;
+      moved += 1;
+    });
+    if (moved > 0) {
+      log(`${sourceName} sends ${moved} ${moved === 1 ? "enemy" : "enemies"} flying away with a terrible fart.`);
+      return true;
+    }
+    log(`${sourceName} rumbles, but no enemies in the room are moved.`);
+    return false;
+  };
 
   effects.forEach((effect) => {
     const amount = Number(effect.value || 0);
@@ -13410,6 +13457,60 @@ function applyConsumableEffects(entry, item, options = {}) {
       } else {
         log(`${sourceName} fizzles because hunger is disabled in this recipe.`);
       }
+      return;
+    }
+
+    if (effect.type === "foodMaxHungerAtFull" && amount > 0) {
+      if (game.recipe?.hungerEnabled === true) {
+        if (game.hunger >= getPlayerMaxHunger()) {
+          const previousMax = getPlayerMaxHunger();
+          game.permanentBonuses.maxHunger += amount;
+          const nextMax = getPlayerMaxHunger();
+          game.hungerMax = nextMax;
+          game.hunger = Math.min(nextMax, game.hunger + Math.max(0, nextMax - previousMax));
+          log(`${sourceName} raises max hunger by ${amount} because your belly was full.`);
+          appliedAny = true;
+        } else {
+          log(`${sourceName} fizzles because hunger is not full.`);
+        }
+      } else {
+        log(`${sourceName} fizzles because hunger is disabled in this recipe.`);
+      }
+      return;
+    }
+
+    if (effect.type === "foodRestoreAllHunger") {
+      if (game.recipe?.hungerEnabled === true) {
+        const previousHunger = game.hunger;
+        game.hunger = getPlayerMaxHunger();
+        log(`${sourceName} restores ${game.hunger - previousHunger} hunger.`);
+        appliedAny = true;
+      } else {
+        log(`${sourceName} fizzles because hunger is disabled in this recipe.`);
+      }
+      return;
+    }
+
+    if (effect.type === "foodSelfDamage" && amount > 0) {
+      const damage = applyEnvironmentalDamage(amount, "player");
+      trackRunStat("damageTaken", damage);
+      game.hp = Math.max(0, game.hp - damage);
+      log(`${sourceName} hurts you for ${damage} damage.`);
+      if (game.hp <= 0) {
+        game.hp = 0;
+        endRun("collapse");
+        if (!game.ended) {
+          appliedAny = true;
+          return;
+        }
+        log("You collapsed in the dungeon. Generate or load a recipe to retry.");
+      }
+      appliedAny = true;
+      return;
+    }
+
+    if (effect.type === "foodFartWarp") {
+      appliedAny = warpRoomEnemiesAway() || appliedAny;
       return;
     }
 
