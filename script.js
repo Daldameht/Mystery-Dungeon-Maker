@@ -532,6 +532,11 @@ const trapEffectOptions = [
   { id: "hunger", label: "Hunger Loss" },
   { id: "attackDebuff", label: "Attack Down" },
   { id: "defenseDebuff", label: "Defense Down" },
+  { id: "tripScatter", label: "Trip Scatter" },
+  { id: "poison", label: "Poison" },
+  { id: "shadowbind", label: "Shadowbind" },
+  { id: "curseRandomItem", label: "Curse Random Item" },
+  { id: "summonMonsters", label: "Summon Monsters" },
   { id: "loseRandomItem", label: "Lose Random Item" },
   { id: "warp", label: "Warp" },
 ];
@@ -541,6 +546,14 @@ const defaultTrapRules = [
   { id: "famishTrap", name: "Famish Trap", enabled: true, effectType: "hunger", value1: 18, value2: 0, uses: 1, design: "caret", locked: true },
   { id: "sporeTrap", name: "Spore Trap", enabled: true, effectType: "attackDebuff", value1: 2, value2: 8, uses: 1, design: "caret", locked: true },
   { id: "warpTrap", name: "Warp Trap", enabled: true, effectType: "warp", value1: 0, value2: 0, uses: 1, design: "caret", locked: true },
+  { id: "tripTrap", name: "Trip Trap", enabled: true, effectType: "tripScatter", value1: 2, value2: 0, uses: 1, design: "caret", locked: true },
+  { id: "arrowTrap", name: "Arrow Trap", enabled: true, effectType: "damage", value1: 6, value2: 0, uses: 1, design: "caret", locked: true },
+  { id: "poisonTrap", name: "Poison Trap", enabled: true, effectType: "poison", value1: 4, value2: 1, uses: 1, design: "caret", locked: true },
+  { id: "rockTrap", name: "Rock Trap", enabled: true, effectType: "damage", value1: 18, value2: 0, uses: 1, design: "caret", locked: true },
+  { id: "boulderTrap", name: "Boulder Trap", enabled: true, effectType: "damage", value1: 35, value2: 0, uses: 1, design: "caret", locked: true },
+  { id: "shadowbindTrap", name: "Shadowbind Trap", enabled: true, effectType: "shadowbind", value1: 3, value2: 0, uses: 1, design: "caret", locked: true },
+  { id: "curseTrap", name: "Curse Trap", enabled: true, effectType: "curseRandomItem", value1: 0, value2: 0, uses: 1, design: "caret", locked: true },
+  { id: "summoningTrap", name: "Summoning Trap", enabled: true, effectType: "summonMonsters", value1: 4, value2: 0, uses: 1, design: "caret", locked: true },
   { id: "emberFloorTrap", name: "Ember Floor", enabled: true, effectType: "damage", value1: 1, value2: 0, uses: 999, design: "lava", locked: true, environmentOnly: true, environmentId: "ember" },
   { id: "fungalSporeFloorTrap", name: "Spore Floor", enabled: true, effectType: "attackDebuff", value1: 1, value2: 6, uses: 999, design: "fungus", locked: true, environmentOnly: true, environmentId: "fungal" },
   { id: "cosmicHoleTrap", name: "Cosmic Hole", enabled: true, effectType: "loseRandomItem", value1: 1, value2: 0, uses: 999, design: "hole", locked: true, environmentOnly: true, environmentId: "cosmic" },
@@ -595,9 +608,10 @@ const game = {
   floorWidth: VIEW_WIDTH,
   floorHeight: VIEW_HEIGHT,
   revealed: [],
-  visible: [],
+  visible: [],  
   viewport: { x: 0, y: 0 },
   player: { x: 1, y: 1 },
+  playerShadowboundTurns: 0,
   pendingCast: null,
   pendingSpecialAttack: null,
   projectile: null,
@@ -1740,6 +1754,16 @@ function getTrapEffectMeta(effectType) {
       return { label1: "Atk Down", label2: "Turns", default1: 2, default2: 8, min1: 1, max1: 12, min2: 1, max2: 99 };
     case "defenseDebuff":
       return { label1: "Def Down", label2: "Turns", default1: 2, default2: 8, min1: 1, max1: 12, min2: 1, max2: 99 };
+    case "tripScatter":
+      return { label1: "Items", label2: "", default1: 2, default2: 0, min1: 1, max1: 12, min2: 0, max2: 0 };
+    case "poison":
+      return { label1: "Damage", label2: "Str Down", default1: 4, default2: 1, min1: 1, max1: 99, min2: 1, max2: 12 };
+    case "shadowbind":
+      return { label1: "Turns", label2: "", default1: 3, default2: 0, min1: 1, max1: 30, min2: 0, max2: 0 };
+    case "curseRandomItem":
+      return { label1: "", label2: "", default1: 0, default2: 0, min1: 0, max1: 0, min2: 0, max2: 0 };
+    case "summonMonsters":
+      return { label1: "Count", label2: "", default1: 4, default2: 0, min1: 1, max1: 8, min2: 0, max2: 0 };
     case "loseRandomItem":
       return { label1: "Items", label2: "", default1: 1, default2: 0, min1: 1, max1: 12, min2: 0, max2: 0 };
     case "warp":
@@ -1838,6 +1862,16 @@ function describeTrapRule(rule) {
       return `Lowers player attack by ${rule.value1} for ${rule.value2} turns.${usesText}${visibilityText}${environmentText}`;
     case "defenseDebuff":
       return `Lowers player defense by ${rule.value1} for ${rule.value2} turns.${usesText}${visibilityText}${environmentText}`;
+    case "tripScatter":
+      return `Scatters ${rule.value1} random inventory item${rule.value1 === 1 ? "" : "s"} onto the floor.${usesText}${visibilityText}${environmentText}`;
+    case "poison":
+      return `Deals ${rule.value1} damage and lowers strength by ${rule.value2}.${usesText}${visibilityText}${environmentText}`;
+    case "shadowbind":
+      return `Stops walking for ${rule.value1} turns.${usesText}${visibilityText}${environmentText}`;
+    case "curseRandomItem":
+      return `Curses a random carried item.${usesText}${visibilityText}${environmentText}`;
+    case "summonMonsters":
+      return `Summons up to ${rule.value1} monsters around the player.${usesText}${visibilityText}${environmentText}`;
     case "loseRandomItem":
       return `Swallows ${rule.value1} random inventory item${rule.value1 === 1 ? "" : "s"} when stepped on.${usesText}${visibilityText}${environmentText}`;
     case "warp":
@@ -9900,6 +9934,7 @@ function startRun(recipe = readRecipe(), publishedId = null) {
   game.processingTurn = false;
   game.lastRunLogDividerTurn = null;
   game.reviveCharges = 0;
+  game.playerShadowboundTurns = 0;
   game.inventory = normalizeStartingInventory(recipe)
     .map((entry) => createStartingItem(recipe, entry))
     .filter(Boolean);
@@ -13314,6 +13349,12 @@ async function advanceTurn(options = {}) {
   }
   trySpawnTrapFromBracelet();
   tickBuffs();
+  if (Number(game.playerShadowboundTurns ?? 0) > 0) {
+    game.playerShadowboundTurns = Math.max(0, Number(game.playerShadowboundTurns ?? 0) - 1);
+    if (game.playerShadowboundTurns === 0) {
+      log("The shadowbind wears off.");
+    }
+  }
   if (processEnvironmentalTurn(options)) {
     resolveTile();
   }
@@ -14933,6 +14974,13 @@ async function tryMove(dx, dy) {
     return;
   }
 
+  if (Number(game.playerShadowboundTurns ?? 0) > 0) {
+    log(`You are shadowbound for ${game.playerShadowboundTurns} more turn${game.playerShadowboundTurns === 1 ? "" : "s"} and cannot walk.`);
+    await advanceTurn();
+    render();
+    return;
+  }
+
   const target = { x: game.player.x + dx, y: game.player.y + dy };
   if (game.tiles[target.y]?.[target.x] === "wall") {
     if (playerCanWallPass()) {
@@ -15608,6 +15656,84 @@ function warpPlayerFromTrap(trap) {
   log(`${trap.name} warps you to another room.`);
 }
 
+function scatterInventoryItemsFromTrap(trap) {
+  const scatterCount = Math.max(1, Number(trap?.value1 ?? 1));
+  const droppedNames = [];
+  for (let index = 0; index < scatterCount; index += 1) {
+    const candidates = game.inventory
+      .map((entry, inventoryIndex) => ({ entry, inventoryIndex }))
+      .filter(({ entry }) => entry && getItemDefinition(entry)?.kind !== "gold");
+    if (candidates.length === 0) {
+      break;
+    }
+    const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+    const dropPosition = getNearbyDropPosition(game.player);
+    if (!dropPosition) {
+      break;
+    }
+    const [entry] = game.inventory.splice(chosen.inventoryIndex, 1);
+    if (!entry) {
+      continue;
+    }
+    droppedNames.push(getVisibleItemName(entry));
+    game.items.push({
+      ...entry,
+      x: dropPosition.x,
+      y: dropPosition.y,
+    });
+  }
+  if (droppedNames.length > 0) {
+    log(`${trap.name} makes you stumble and scatter ${droppedNames.join(", ")}.`);
+  } else {
+    log(`${trap.name} trips you, but nothing spills out.`);
+  }
+}
+
+function curseRandomInventoryItemFromTrap(trap) {
+  if (playerHasCursebreakBracelet()) {
+    log(`${trap.name} tries to curse your pack, but Cursebreak blocks it.`);
+    return;
+  }
+  const candidates = game.inventory.filter((entry) => entry && !entry.cursed);
+  if (candidates.length === 0) {
+    log(`${trap.name} crackles, but no carried item can be cursed.`);
+    return;
+  }
+  const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+  chosen.cursed = true;
+  chosen.curseRevealed = false;
+  log(`${trap.name} curses ${getVisibleItemName(chosen)} in your bag.`);
+}
+
+function summonMonstersFromTrap(trap) {
+  const summonCount = Math.max(1, Number(trap?.value1 ?? 1));
+  const candidates = getSurroundingFloorTiles(game.player);
+  if (candidates.length === 0) {
+    log(`${trap.name} flashes, but no monster can appear nearby.`);
+    return;
+  }
+  let spawned = 0;
+  while (candidates.length > 0 && spawned < summonCount) {
+    const variant = chooseMonsterVariant(game.recipe, game.floor, Math.random);
+    if (!variant) {
+      break;
+    }
+    const choiceIndex = Math.floor(Math.random() * candidates.length);
+    const [position] = candidates.splice(choiceIndex, 1);
+    const monster = createMonster(variant);
+    monster.x = position.x;
+    monster.y = position.y;
+    monster.hasSpottedPlayer = true;
+    game.monsters.push(monster);
+    spawned += 1;
+  }
+  if (spawned > 0) {
+    log(`${trap.name} summons ${spawned} monster${spawned === 1 ? "" : "s"} around you.`);
+  } else {
+    log(`${trap.name} flashes, but nothing answers its call.`);
+  }
+}
+
 function applyTrapEffect(trap) {
   if (!trap) {
     return;
@@ -15653,6 +15779,38 @@ function applyTrapEffect(trap) {
       turns: trap.value2 || 1,
     });
     log(`${trap.name} lowers your defense by ${trap.value1} for ${trap.value2} turns.`);
+    return;
+  }
+
+  if (trap.effectType === "tripScatter") {
+    scatterInventoryItemsFromTrap(trap);
+    return;
+  }
+
+  if (trap.effectType === "poison") {
+    const damage = applyEnvironmentalDamage(trap.value1 || 1, "player");
+    const strengthLoss = Math.max(1, Number(trap.value2 ?? 1));
+    trackRunStat("damageTaken", damage);
+    game.hp -= damage;
+    game.permanentBonuses.attack -= strengthLoss;
+    log(`${trap.name} poisons you for ${damage} damage and lowers strength by ${strengthLoss}.`);
+    return;
+  }
+
+  if (trap.effectType === "shadowbind") {
+    const turns = Math.max(1, Number(trap.value1 ?? 1));
+    game.playerShadowboundTurns = Math.max(Number(game.playerShadowboundTurns ?? 0), turns + 1);
+    log(`${trap.name} shadowbinds you for ${turns} turns.`);
+    return;
+  }
+
+  if (trap.effectType === "curseRandomItem") {
+    curseRandomInventoryItemFromTrap(trap);
+    return;
+  }
+
+  if (trap.effectType === "summonMonsters") {
+    summonMonstersFromTrap(trap);
     return;
   }
 
