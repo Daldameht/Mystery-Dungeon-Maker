@@ -620,6 +620,7 @@ const game = {
   identifiedItemIds: new Set(),
   usedUnknownItemNames: new Set(),
   pendingUpgradeChoice: null,
+  pendingScrollChoice: null,
   pendingStringAction: null,
   editingEquipmentNameSlot: null,
   monsterRespawnCharge: 0,
@@ -2310,6 +2311,17 @@ const itemEffectDefinitions = [
   { id: "upgradeShield", label: "Upgrade Shield", kinds: ["scroll", "string", "grass", "food", "utility"], valueLabel: "Amount", min: 1, step: 1 },
   { id: "downgradeShield", label: "Downgrade Shield", kinds: ["scroll", "string", "grass", "food", "utility"], valueLabel: "Amount", min: 1, step: 1 },
   { id: "clearTraps", label: "Clear Traps", kinds: ["scroll", "string", "grass", "food", "utility"], valueLabel: "Count", min: 1, step: 1 },
+  { id: "scrollSlumber", label: "Slumber", kinds: ["scroll"], valueLabel: "Turns", min: 1, step: 1, defaultValue: 10 },
+  { id: "scrollWindblade", label: "Windblade", kinds: ["scroll"], valueLabel: "Damage", min: 1, step: 1, defaultValue: 12 },
+  { id: "scrollIdentify", label: "Identify", kinds: ["scroll"], valueLabel: "All %", min: 0, step: 1, defaultValue: 25 },
+  { id: "scrollPlating", label: "Plating", kinds: ["scroll"], valueLabel: "On", min: 1, step: 1, booleanValue: true },
+  { id: "scrollRuneEraser", label: "Rune-eraser", kinds: ["scroll"], valueLabel: "Runes", min: 1, step: 1, defaultValue: 1 },
+  { id: "scrollOnigiri", label: "Onigiri", kinds: ["scroll"], valueLabel: "On", min: 1, step: 1, booleanValue: true },
+  { id: "scrollMonstercall", label: "Monstercall", kinds: ["scroll"], valueLabel: "On", min: 1, step: 1, booleanValue: true },
+  { id: "scrollCollection", label: "Collection", kinds: ["scroll"], valueLabel: "On", min: 1, step: 1, booleanValue: true },
+  { id: "scrollGamblers", label: "Gambler's", kinds: ["scroll"], valueLabel: "Gold", min: 0, step: 1, defaultValue: 10000 },
+  { id: "scrollFixer", label: "Fixer", kinds: ["scroll"], valueLabel: "On", min: 1, step: 1, booleanValue: true },
+  { id: "scrollBlank", label: "Blank", kinds: ["scroll"], valueLabel: "On", min: 1, step: 1, booleanValue: true },
 ];
 
 function getItemEffectDefinition(effectType = "heal") {
@@ -2418,6 +2430,28 @@ function getItemEffectTooltip(effectType = "heal") {
       return "Lowers a shield's upgrade value.";
     case "clearTraps":
       return "Removes traps from the floor.";
+    case "scrollSlumber":
+      return "Puts every enemy in the current room to sleep for the chosen number of turns.";
+    case "scrollWindblade":
+      return "Cuts every enemy in the current room with a shockwave for the chosen damage.";
+    case "scrollIdentify":
+      return "Identifies one chosen item, with the chosen percent chance to identify your whole inventory instead.";
+    case "scrollPlating":
+      return "Coats a chosen weapon or shield so its upgrade value cannot decrease.";
+    case "scrollRuneEraser":
+      return "Removes a rune from a chosen weapon or shield.";
+    case "scrollOnigiri":
+      return "Turns a chosen inventory item into a random food item.";
+    case "scrollMonstercall":
+      return "Turns the current room into a monster house.";
+    case "scrollCollection":
+      return "Pulls floor items toward you and places them around your position.";
+    case "scrollGamblers":
+      return "Sets your gold to the chosen amount, wiping out whatever you were carrying before.";
+    case "scrollFixer":
+      return "Fully restores HP.";
+    case "scrollBlank":
+      return "Transforms this blank scroll into any other enabled scroll except another blank scroll.";
     default:
       return "No tooltip written yet for this effect.";
   }
@@ -2428,7 +2462,7 @@ function makeDefaultItemEffect(kind = "grass") {
   return {
     enabled: true,
     type: definition.id,
-    value: definition.booleanValue ? 1 : Math.max(0, definition.min ?? 0),
+    value: definition.booleanValue ? 1 : Number(definition.defaultValue ?? Math.max(0, definition.min ?? 0)),
     extra: definition.defaultExtra ?? 0,
   };
 }
@@ -2456,7 +2490,7 @@ function normalizeItemEffect(effect = {}, kind = "grass") {
       ? 1
       : Number.isFinite(Number(effect?.value))
         ? Number(effect.value)
-        : Math.max(0, definition.min ?? 0),
+        : Number(definition.defaultValue ?? Math.max(0, definition.min ?? 0)),
     extra: Number.isFinite(Number(effect?.extra))
       ? Number(effect.extra)
       : (definition.defaultExtra ?? 0),
@@ -9798,6 +9832,7 @@ function startRun(recipe = readRecipe(), publishedId = null) {
   game.hungerStepCounter = 0;
   game.passiveHealBlockedThisTurn = false;
   game.pendingUpgradeChoice = null;
+  game.pendingScrollChoice = null;
   game.pendingStringAction = null;
   game.pendingCast = null;
   clearPendingSpecialAttack();
@@ -10017,6 +10052,13 @@ function render() {
         if (visible && monster && !monster.hiddenUntilNear) {
           tile.className = `tile visible monster ${borderClasses}`;
           tile.textContent = monster.glyph;
+          if (Number(monster.sleepTurns ?? 0) > 0) {
+            tile.classList.add("sleeping");
+            const sleepMarker = document.createElement("span");
+            sleepMarker.className = "monster-status";
+            sleepMarker.textContent = "Z";
+            tile.append(sleepMarker);
+          }
         }
         if (visible && boss) {
           tile.className = `tile visible monster boss ${borderClasses}`;
@@ -10913,8 +10955,39 @@ function renderInventoryMenu() {
 
 function renderUpgradeChoicePanel() {
   const pending = game.pendingUpgradeChoice;
-  upgradeChoiceSection.classList.toggle("hidden", !pending);
+  const pendingScroll = game.pendingScrollChoice;
+  upgradeChoiceSection.classList.toggle("hidden", !(pending || pendingScroll));
   upgradeChoiceList.innerHTML = "";
+
+  if (pendingScroll) {
+    const intro = document.createElement("article");
+    intro.className = "item-card";
+    intro.innerHTML = `<strong>${pendingScroll.sourceName}</strong><p>${pendingScroll.prompt}</p>`;
+    const introActions = document.createElement("div");
+    introActions.className = "item-actions";
+    introActions.append(makeInventoryAction("Cancel", "cancel_scroll_choice", -1));
+    intro.append(introActions);
+    upgradeChoiceList.append(intro);
+
+    pendingScroll.targets.forEach((target, index) => {
+      const card = document.createElement("article");
+      const previewEntry = target.previewEntry ?? target.entry;
+      if (previewEntry) {
+        card.className = getItemCardClass(previewEntry);
+        card.style.cssText = buildRarityCardStyle(previewEntry);
+        card.append(makeItemSummary(previewEntry));
+      } else {
+        card.className = "item-card";
+        card.innerHTML = `<strong>${escapeHtml(target.label ?? `Choice ${index + 1}`)}</strong><p>${escapeHtml(target.description ?? "")}</p>`;
+      }
+      const actions = document.createElement("div");
+      actions.className = "item-actions";
+      actions.append(makeInventoryAction(pendingScroll.actionLabel ?? "Apply", "apply_scroll_choice", index));
+      card.append(actions);
+      upgradeChoiceList.append(card);
+    });
+    return;
+  }
 
   if (!pending) {
     return;
@@ -10944,6 +11017,144 @@ function renderUpgradeChoicePanel() {
 
 function clearPendingStringAction() {
   game.pendingStringAction = null;
+}
+
+function putMonsterToSleep(monster, turns = 10) {
+  if (!monster) {
+    return;
+  }
+  monster.sleepTurns = Math.max(Number(monster.sleepTurns ?? 0), Math.max(1, Number(turns ?? 10)));
+}
+
+function getSurroundingFloorTiles(center = game.player) {
+  const positions = [];
+  for (let dy = -1; dy <= 1; dy += 1) {
+    for (let dx = -1; dx <= 1; dx += 1) {
+      if (dx === 0 && dy === 0) {
+        continue;
+      }
+      const x = center.x + dx;
+      const y = center.y + dy;
+      if (game.tiles[y]?.[x] !== "floor") {
+        continue;
+      }
+      if (game.monsters.some((monster) => monster.x === x && monster.y === y) || bossOccupies(x, y)) {
+        continue;
+      }
+      if (x === game.exit.x && y === game.exit.y) {
+        continue;
+      }
+      positions.push({ x, y });
+    }
+  }
+  return positions;
+}
+
+function getEnabledFoodRules() {
+  return getSpawnableItemPoolRules(game.recipe)
+    .filter((rule) => itemDefinitions[rule.itemId]?.kind === "food");
+}
+
+function getEnabledScrollRulesExcluding(itemId) {
+  return getSpawnableItemPoolRules(game.recipe)
+    .filter((rule) => itemDefinitions[rule.itemId]?.kind === "scroll" && rule.itemId !== itemId)
+    .filter((rule) => !getItemRuleEffects(rule).some((effect) => effect.enabled && effect.type === "scrollBlank"));
+}
+
+function removeRandomRunesFromEntry(entry, count = 1) {
+  const runeIds = Array.isArray(entry?.runeIds) ? [...entry.runeIds] : [];
+  if (runeIds.length === 0) {
+    return [];
+  }
+  const removed = [];
+  for (let index = 0; index < count && runeIds.length > 0; index += 1) {
+    const removeIndex = Math.floor(Math.random() * runeIds.length);
+    const [runeId] = runeIds.splice(removeIndex, 1);
+    const rune = normalizeRunePoolRules(game.recipe?.runePoolRules).find((rule) => rule.id === runeId);
+    removed.push(rune?.name ?? "Unknown Rune");
+  }
+  entry.runeIds = runeIds;
+  return removed;
+}
+
+function applyScrollChoiceTarget(targetIndex) {
+  const pending = game.pendingScrollChoice;
+  if (!pending) {
+    render();
+    return false;
+  }
+  const target = pending.targets[targetIndex];
+  if (!target) {
+    render();
+    return false;
+  }
+
+  const sourceEntry = pending.sourceEntry;
+  const effect = pending.effect;
+  let applied = false;
+
+  if (effect.type === "scrollIdentify" && target.entry) {
+    identifyItemType(target.entry.itemId);
+    target.entry.curseRevealed = false;
+    log(`${pending.sourceName} identifies ${getVisibleItemName(target.entry)}.`);
+    applied = true;
+  } else if (effect.type === "scrollPlating" && target.entry) {
+    target.entry.plated = true;
+    log(`${pending.sourceName} plates ${getVisibleItemName(target.entry)} against rust.`);
+    applied = true;
+  } else if (effect.type === "scrollRuneEraser" && target.entry) {
+    const removed = removeRandomRunesFromEntry(target.entry, Math.max(1, Number(effect.value ?? 1)));
+    if (removed.length > 0) {
+      log(`${pending.sourceName} erases ${removed.join(", ")} from ${getVisibleItemName(target.entry)}.`);
+      applied = true;
+    } else {
+      log(`${getVisibleItemName(target.entry)} has no runes to erase.`);
+    }
+  } else if (effect.type === "scrollOnigiri" && target.entry) {
+    const foodRules = getEnabledFoodRules();
+    if (foodRules.length === 0) {
+      log(`${pending.sourceName} has no enabled food to transform into.`);
+    } else {
+      const chosenRule = foodRules[Math.floor(Math.random() * foodRules.length)];
+      const replacement = createSpawnedItem(game.recipe, chosenRule.itemId, Math.random);
+      if (target.source === "inventory" && Number.isInteger(target.index)) {
+        game.inventory[target.index] = replacement;
+        log(`${pending.sourceName} turns ${getVisibleItemName(target.entry)} into ${getVisibleItemName(replacement)}.`);
+        applied = true;
+      }
+    }
+  } else if (effect.type === "scrollBlank" && target.rule) {
+    const replacement = createSpawnedItem(game.recipe, target.rule.itemId, Math.random);
+    const sourceIndex = game.inventory.indexOf(sourceEntry);
+    if (sourceIndex >= 0) {
+      game.inventory[sourceIndex] = replacement;
+      log(`${pending.sourceName} becomes ${getVisibleItemName(replacement)}.`);
+      applied = true;
+    } else {
+      const floorIndex = game.items.indexOf(sourceEntry);
+      if (floorIndex >= 0) {
+        game.items[floorIndex] = { ...replacement, x: sourceEntry.x, y: sourceEntry.y };
+        log(`${pending.sourceName} becomes ${getVisibleItemName(replacement)}.`);
+        applied = true;
+      }
+    }
+  }
+
+  if (!applied) {
+    clearPendingScrollChoice();
+    render();
+    return false;
+  }
+
+  if (pending.consumeSource && effect.type !== "scrollBlank") {
+    removeSpecificEntry(sourceEntry);
+  }
+  trackRunStat("itemsUsed");
+  applyConditionalItemUseEffect(sourceEntry, getItemDefinition(sourceEntry));
+  checkCustomGoalCompletion();
+  clearPendingScrollChoice();
+  spendMenuTurn();
+  return true;
 }
 
 function getStringUsesRemaining(entry) {
@@ -11938,6 +12149,28 @@ function describeItem(item) {
       parts.push(`Deals ${effect.value} damage to you`);
     } else if (effect.type === "foodFartWarp") {
       parts.push("Teleports all room enemies elsewhere");
+    } else if (effect.type === "scrollSlumber") {
+      parts.push(`Puts room enemies to sleep for ${effect.value} turns`);
+    } else if (effect.type === "scrollWindblade") {
+      parts.push(`Deals ${effect.value} wind damage to the whole room`);
+    } else if (effect.type === "scrollIdentify") {
+      parts.push(`${effect.value}% chance to identify all carried items`);
+    } else if (effect.type === "scrollPlating") {
+      parts.push("Plates a weapon or shield against rust");
+    } else if (effect.type === "scrollRuneEraser") {
+      parts.push(`Erases ${effect.value} rune${effect.value === 1 ? "" : "s"} from gear`);
+    } else if (effect.type === "scrollOnigiri") {
+      parts.push("Turns a chosen item into random food");
+    } else if (effect.type === "scrollMonstercall") {
+      parts.push("Turns the current room into a monster house");
+    } else if (effect.type === "scrollCollection") {
+      parts.push("Pulls floor items around you");
+    } else if (effect.type === "scrollGamblers") {
+      parts.push(`Sets your gold to ${effect.value}`);
+    } else if (effect.type === "scrollFixer") {
+      parts.push("Fully restores HP");
+    } else if (effect.type === "scrollBlank") {
+      parts.push("Transforms into any other enabled scroll");
     } else if (effect.type === "shopDiscount") {
       parts.push(`Shop prices -${effect.value}%`);
     } else if (effect.type === "trapmore") {
@@ -12072,7 +12305,7 @@ function getInventoryOnlyEntries() {
 
 function applyUpgradeToEntry(entry, amount = 1, minimum = 0, maximum = MAX_ITEM_UPGRADE) {
   const current = clampUpgradeValue(entry.upgradeLevel, minimum, maximum);
-  if (amount < 0 && (itemHasRuneEffect(entry, "rustproof") || playerHasBraceletRustproof())) {
+  if (amount < 0 && (entry?.plated || itemHasRuneEffect(entry, "rustproof") || playerHasBraceletRustproof())) {
     return 0;
   }
   const next = clampUpgradeValue(current + amount, minimum, maximum);
@@ -12094,6 +12327,10 @@ function getMultiUpgradeAmount() {
 
 function clearPendingUpgradeChoice() {
   game.pendingUpgradeChoice = null;
+}
+
+function clearPendingScrollChoice() {
+  game.pendingScrollChoice = null;
 }
 
 function removeSpecificEntry(entry) {
@@ -12187,103 +12424,349 @@ function cancelEquipmentNameEdit() {
 }
 
 function readScroll(entry, item, removeEntry) {
+  return readScrollWithEffects(entry, item, removeEntry, true);
+}
+
+function readScrollWithEffects(entry, item, removeEntry, consumeSource = true) {
   const rule = getItemPoolRule(game.recipe, item.itemId);
   const inventoryEffectRoll = Boolean(rule?.inventoryEffect) && Math.random() < getScrollInventoryEffectChance();
-
-  if (item.scrollEffect === "uncurse") {
-    const amount = Math.max(1, item.scrollAmount ?? 1);
-    const targets = inventoryEffectRoll
-      ? getInventoryOnlyEntries().filter(({ entry: candidate }) => candidate.cursed)
-      : getOwnedEntries(true).filter(({ entry: candidate }) => candidate.cursed).slice(0, amount);
-    if (targets.length === 0) {
-      log(`${item.name} has no cursed item to affect.`);
-      render();
-      return false;
-    }
-    targets.forEach(({ entry: target }) => {
-      target.cursed = false;
-      target.curseRevealed = false;
-      identifyItemType(target.itemId);
-    });
-    removeEntry();
-    trackRunStat("itemsUsed");
-    log(inventoryEffectRoll
-      ? `${item.name} releases curses across your inventory.`
-      : `${item.name} dispels a curse.`);
-    applyConditionalItemUseEffect(entry, item);
-    spendMenuTurn();
-    return true;
+  const effects = getItemEffects(entry).filter((effect) => effect?.enabled);
+  if (effects.length === 0 && item.scrollEffect) {
+    effects.push({ enabled: true, type: item.scrollEffect, value: Number(item.scrollAmount ?? 1), extra: 0 });
   }
+  let appliedAny = false;
 
-  if (["upgradeSword", "downgradeSword", "upgradeShield", "downgradeShield"].includes(item.scrollEffect)) {
-    const handType = item.scrollEffect.includes("Sword") ? "sword" : "shield";
-    const downgrade = item.scrollEffect.startsWith("downgrade");
-    const targets = getOwnedEntries(true).filter(({ entry: candidate }) => {
-      const definition = getItemDefinition(candidate);
-      return definition?.kind === "hand" && definition?.handType === handType;
-    });
-    if (targets.length === 0) {
-      log(`${item.name} has no ${handType} to affect.`);
-      render();
-      return false;
-    }
-    const amount = Math.max(1, item.scrollAmount ?? 1) * (rule?.inventoryEffect ? getMultiUpgradeAmount() : 1) * (downgrade ? -1 : 1);
-    if (targets.length === 1) {
-      const target = targets[0].entry;
-      const gained = applyUpgradeToEntry(target, amount, downgrade ? -99 : 0, 3);
-      if ((amount >= 0 && gained <= 0) || (amount < 0 && gained >= 0)) {
-        log(downgrade
-          ? `${getVisibleItemName(target)} cannot be downgraded any further.`
-          : `${getVisibleItemName(target)} cannot be upgraded any further.`);
+  for (const effect of effects) {
+    if (effect.type === "uncurse") {
+      const amount = Math.max(1, Number(effect.value ?? item.scrollAmount ?? 1));
+      const targets = inventoryEffectRoll
+        ? getInventoryOnlyEntries().filter(({ entry: candidate }) => candidate.cursed)
+        : getOwnedEntries(true).filter(({ entry: candidate }) => candidate.cursed).slice(0, amount);
+      if (targets.length === 0) {
+        log(`${item.name} has no cursed item to affect.`);
         render();
         return false;
       }
-      removeEntry();
-      trackRunStat("itemsUsed");
-      const change = Math.abs(gained);
-      log(downgrade
-        ? `${item.name} downgrades ${getVisibleItemName(target)}${change > 1 ? ` by ${change}` : ""}.`
-        : `${item.name} upgrades ${getVisibleItemName(target)}${change > 1 ? ` by +${change}` : ""}.`);
-      applyConditionalItemUseEffect(entry, item);
-      spendMenuTurn();
-      return true;
+      targets.forEach(({ entry: target }) => {
+        target.cursed = false;
+        target.curseRevealed = false;
+        identifyItemType(target.itemId);
+      });
+      log(inventoryEffectRoll
+        ? `${item.name} releases curses across your inventory.`
+        : `${item.name} dispels a curse.`);
+      appliedAny = true;
+      continue;
     }
 
-    game.pendingUpgradeChoice = {
-      sourceEntry: entry,
-      sourceName: item.name,
-      handType,
-      amount,
-      minimum: downgrade ? -99 : 0,
-      maximum: MAX_ITEM_UPGRADE,
-      targets,
-      removeSourceOnApply: true,
-    };
-    log(`${item.name} is ready. Choose which ${handType} to ${downgrade ? "downgrade" : "upgrade"}.`);
+    if (["upgradeSword", "downgradeSword", "upgradeShield", "downgradeShield"].includes(effect.type)) {
+      const handType = effect.type.includes("Sword") ? "sword" : "shield";
+      const downgrade = effect.type.startsWith("downgrade");
+      const targets = getOwnedEntries(true).filter(({ entry: candidate }) => {
+        const definition = getItemDefinition(candidate);
+        return definition?.kind === "hand" && definition?.handType === handType;
+      });
+      if (targets.length === 0) {
+        log(`${item.name} has no ${handType} to affect.`);
+        render();
+        return false;
+      }
+      const amount = Math.max(1, Number(effect.value ?? item.scrollAmount ?? 1)) * (rule?.inventoryEffect ? getMultiUpgradeAmount() : 1) * (downgrade ? -1 : 1);
+      if (targets.length === 1) {
+        const target = targets[0].entry;
+        const gained = applyUpgradeToEntry(target, amount, downgrade ? -99 : 0, MAX_ITEM_UPGRADE);
+        if ((amount >= 0 && gained <= 0) || (amount < 0 && gained >= 0)) {
+          log(downgrade
+            ? `${getVisibleItemName(target)} cannot be downgraded any further.`
+            : `${getVisibleItemName(target)} cannot be upgraded any further.`);
+          render();
+          return false;
+        }
+        const change = Math.abs(gained);
+        log(downgrade
+          ? `${item.name} downgrades ${getVisibleItemName(target)}${change > 1 ? ` by ${change}` : ""}.`
+          : `${item.name} upgrades ${getVisibleItemName(target)}${change > 1 ? ` by +${change}` : ""}.`);
+        appliedAny = true;
+        continue;
+      }
+
+      game.pendingUpgradeChoice = {
+        sourceEntry: entry,
+        sourceName: item.name,
+        handType,
+        amount,
+        minimum: downgrade ? -99 : 0,
+        maximum: MAX_ITEM_UPGRADE,
+        targets,
+        removeSourceOnApply: consumeSource,
+      };
+      log(`${item.name} is ready. Choose which ${handType} to ${downgrade ? "downgrade" : "upgrade"}.`);
+      render();
+      return false;
+    }
+
+    if (effect.type === "clearTraps") {
+      if (game.traps.length === 0) {
+        log(`${item.name} finds no traps on this floor.`);
+        render();
+        return false;
+      }
+      const clearCount = Math.max(1, Number(effect.value ?? item.scrollAmount ?? 1));
+      const removed = Math.min(clearCount, game.traps.length);
+      game.traps.splice(0, removed);
+      log(`${item.name} erases ${removed} trap${removed === 1 ? "" : "s"} from the floor.`);
+      appliedAny = true;
+      continue;
+    }
+
+    if (effect.type === "scrollSlumber") {
+      const room = findRoomAt(game.player);
+      if (!room) {
+        log(`${item.name} rustles, but you are not standing in a room.`);
+        render();
+        return false;
+      }
+      const targets = game.monsters.filter((monster) => pointInRoom(monster, room));
+      targets.forEach((monster) => putMonsterToSleep(monster, Math.max(1, Number(effect.value ?? 10))));
+      log(targets.length > 0
+        ? `${item.name} puts ${targets.length} room ${targets.length === 1 ? "enemy" : "enemies"} to sleep.`
+        : `${item.name} swirls through the room, but no enemies are there to sleep.`);
+      appliedAny = true;
+      continue;
+    }
+
+    if (effect.type === "scrollWindblade") {
+      const room = findRoomAt(game.player);
+      if (!room) {
+        log(`${item.name} tears the air, but you are not standing in a room.`);
+        render();
+        return false;
+      }
+      const damageAmount = Math.max(1, Number(effect.value ?? 12));
+      let hits = 0;
+      for (let index = game.monsters.length - 1; index >= 0; index -= 1) {
+        const monster = game.monsters[index];
+        if (!pointInRoom(monster, room)) {
+          continue;
+        }
+        const damage = applyEnvironmentalDamage(damageAmount, "enemy");
+        monster.hp -= damage;
+        hits += 1;
+        log(`${item.name} slices the ${monster.name} for ${damage} damage.`);
+        if (monster.hp <= 0) {
+          const defeatedMonster = monster;
+          applyEnemyDeathSkillEffects(defeatedMonster);
+          trackGoalKill(monster);
+          awardXp(monster.xp, monster.name);
+          game.monsters.splice(index, 1);
+          trackRunStat("monstersDefeated");
+          playSoundEffect("monsterDefeat");
+          log(`The ${monster.name} is defeated.`);
+          dropEnemyLoot(defeatedMonster);
+        }
+      }
+      if (game.boss && game.bossRoom && pointInRoom(game.player, game.bossRoom)) {
+        const damage = applyEnvironmentalDamage(damageAmount, "enemy");
+        game.boss.hp -= damage;
+        hits += 1;
+        log(`${item.name} slices ${game.boss.name} for ${damage} damage.`);
+        if (game.boss.hp <= 0) {
+          defeatBoss();
+        }
+      }
+      if (hits === 0) {
+        log(`${item.name} carves the room, but hits nothing.`);
+      }
+      appliedAny = true;
+      continue;
+    }
+
+    if (effect.type === "scrollIdentify") {
+      const identifyAllChance = Math.max(0, Number(effect.value ?? 25));
+      if (Math.random() * 100 < identifyAllChance) {
+        getInventoryOnlyEntries().forEach(({ entry: target }) => identifyItemType(target.itemId));
+        log(`${item.name} identifies your whole inventory.`);
+        appliedAny = true;
+        continue;
+      }
+      const targets = getOwnedEntries(true).filter(({ entry: candidate }) => !isItemTypeIdentified(candidate.itemId));
+      if (targets.length === 0) {
+        log(`${item.name} finds nothing left to identify.`);
+        render();
+        return false;
+      }
+      game.pendingScrollChoice = {
+        sourceEntry: entry,
+        sourceName: item.name,
+        effect,
+        consumeSource,
+        actionLabel: "Identify",
+        prompt: "Choose an item to identify.",
+        targets,
+      };
+      render();
+      return false;
+    }
+
+    if (effect.type === "scrollPlating") {
+      const targets = getOwnedEntries(true).filter(({ entry: candidate }) => getItemDefinition(candidate)?.kind === "hand");
+      if (targets.length === 0) {
+        log(`${item.name} has no weapon or shield to plate.`);
+        render();
+        return false;
+      }
+      game.pendingScrollChoice = {
+        sourceEntry: entry,
+        sourceName: item.name,
+        effect,
+        consumeSource,
+        actionLabel: "Plate",
+        prompt: "Choose a weapon or shield to protect from downgrade.",
+        targets,
+      };
+      render();
+      return false;
+    }
+
+    if (effect.type === "scrollRuneEraser") {
+      const targets = getOwnedEntries(true).filter(({ entry: candidate }) => getItemDefinition(candidate)?.kind === "hand" && Array.isArray(candidate.runeIds) && candidate.runeIds.length > 0);
+      if (targets.length === 0) {
+        log(`${item.name} finds no runed weapon or shield to erase.`);
+        render();
+        return false;
+      }
+      game.pendingScrollChoice = {
+        sourceEntry: entry,
+        sourceName: item.name,
+        effect,
+        consumeSource,
+        actionLabel: "Erase",
+        prompt: "Choose a weapon or shield to erase a rune from.",
+        targets,
+      };
+      render();
+      return false;
+    }
+
+    if (effect.type === "scrollOnigiri") {
+      const targets = getInventoryOnlyEntries().filter(({ entry: candidate }) => candidate !== entry && getItemDefinition(candidate)?.kind !== "gold");
+      if (targets.length === 0) {
+        log(`${item.name} finds no inventory item to transform.`);
+        render();
+        return false;
+      }
+      game.pendingScrollChoice = {
+        sourceEntry: entry,
+        sourceName: item.name,
+        effect,
+        consumeSource,
+        actionLabel: "Transform",
+        prompt: "Choose an inventory item to turn into random food.",
+        targets,
+      };
+      render();
+      return false;
+    }
+
+    if (effect.type === "scrollMonstercall") {
+      const room = findRoomAt(game.player);
+      if (!room) {
+        log(`${item.name} howls, but you are not standing in a room.`);
+        render();
+        return false;
+      }
+      triggerMonsterHouse({ roomId: room.id, triggered: false });
+      appliedAny = true;
+      continue;
+    }
+
+    if (effect.type === "scrollCollection") {
+      const openTiles = getSurroundingFloorTiles(game.player);
+      if (openTiles.length === 0) {
+        log(`${item.name} tugs at the floor, but there is nowhere for items to gather.`);
+        render();
+        return false;
+      }
+      const movable = game.items
+        .filter((floorItem) => !floorItem.shopPrice && !floorItem.pendingSale)
+        .sort((left, right) => (Math.abs(left.x - game.player.x) + Math.abs(left.y - game.player.y)) - (Math.abs(right.x - game.player.x) + Math.abs(right.y - game.player.y)));
+      let moved = 0;
+      openTiles.forEach((tilePosition, index) => {
+        const floorItem = movable[index];
+        if (!floorItem) {
+          return;
+        }
+        floorItem.x = tilePosition.x;
+        floorItem.y = tilePosition.y;
+        moved += 1;
+      });
+      log(moved > 0
+        ? `${item.name} gathers ${moved} floor item${moved === 1 ? "" : "s"} around you.`
+        : `${item.name} finds no loose floor items to collect.`);
+      appliedAny = true;
+      continue;
+    }
+
+    if (effect.type === "scrollGamblers") {
+      const goldTarget = Math.max(0, Number(effect.value ?? 10000));
+      const previousGold = game.gold;
+      game.gold = goldTarget;
+      trackGoalGold(Math.max(0, goldTarget - previousGold));
+      checkCustomGoalCompletion();
+      log(`${item.name} wipes out your old purse and leaves you with ${goldTarget} gold.`);
+      appliedAny = true;
+      continue;
+    }
+
+    if (effect.type === "scrollFixer") {
+      const previousHp = game.hp;
+      game.hp = getPlayerMaxHp();
+      const healed = Math.max(0, game.hp - previousHp);
+      trackRunStat("healingRecovered", healed);
+      handleHealingItemEnemySkill(healed);
+      log(`${item.name} fully restores your HP.`);
+      appliedAny = true;
+      continue;
+    }
+
+    if (effect.type === "scrollBlank") {
+      const scrollRules = getEnabledScrollRulesExcluding(item.itemId);
+      if (scrollRules.length === 0) {
+        log(`${item.name} has no other enabled scroll to copy.`);
+        render();
+        return false;
+      }
+      game.pendingScrollChoice = {
+        sourceEntry: entry,
+        sourceName: item.name,
+        effect,
+        consumeSource,
+        actionLabel: "Become",
+        prompt: "Choose which enabled scroll this blank scroll should become.",
+        targets: scrollRules.map((targetRule) => ({
+          rule: targetRule,
+          previewEntry: createSpawnedItem(game.recipe, targetRule.itemId, Math.random),
+        })),
+      };
+      render();
+      return false;
+    }
+  }
+
+  if (!appliedAny) {
+    log("Nothing happens.");
     render();
     return false;
   }
 
-  if (item.scrollEffect === "clearTraps") {
-    if (game.traps.length === 0) {
-      log(`${item.name} finds no traps on this floor.`);
-      render();
-      return false;
-    }
+  if (consumeSource) {
     removeEntry();
-    trackRunStat("itemsUsed");
-    const clearCount = Math.max(1, item.scrollAmount ?? 1);
-    const removed = Math.min(clearCount, game.traps.length);
-    game.traps.splice(0, removed);
-    log(`${item.name} erases ${removed} trap${removed === 1 ? "" : "s"} from the floor.`);
-    applyConditionalItemUseEffect(entry, item);
-    spendMenuTurn();
-    return true;
   }
-
-  log("Nothing happens.");
-  render();
-  return false;
+  trackRunStat("itemsUsed");
+  applyConditionalItemUseEffect(entry, item);
+  checkCustomGoalCompletion();
+  spendMenuTurn();
+  return true;
 }
 
 function startStaffCast(entry) {
@@ -13706,7 +14189,7 @@ function useItemEntry(entry, removeEntry, replaceEntry = null) {
     const blessedRetained = consumeBlessing(entry, item);
     blockPassiveHealThisTurn(passiveHealRules.itemAction);
     identifyIfPossible(entry);
-    return readScroll(entry, getItemDefinition(entry), blessedRetained ? () => {} : removeEntry);
+    return readScrollWithEffects(entry, getItemDefinition(entry), blessedRetained ? () => {} : removeEntry, !blessedRetained);
   }
   if (item.kind === "string") {
     playSoundEffect("itemUse");
@@ -15098,6 +15581,10 @@ function resolveTile() {
 }
 
 async function performMonsterAction(monster) {
+  if (Number(monster.sleepTurns ?? 0) > 0) {
+    monster.sleepTurns = Math.max(0, Number(monster.sleepTurns ?? 0) - 1);
+    return;
+  }
   if (Number(monster.shadowboundTurns ?? 0) > 0) {
     monster.shadowboundTurns = Math.max(0, Number(monster.shadowboundTurns ?? 0) - 1);
     return;
@@ -17168,6 +17655,15 @@ upgradeChoiceList.addEventListener("click", (event) => {
   }
   if (button.dataset.action === "apply_upgrade_choice") {
     applyUpgradeChoiceTarget(Number(button.dataset.index));
+    return;
+  }
+  if (button.dataset.action === "cancel_scroll_choice") {
+    clearPendingScrollChoice();
+    render();
+    return;
+  }
+  if (button.dataset.action === "apply_scroll_choice") {
+    applyScrollChoiceTarget(Number(button.dataset.index));
   }
 });
 

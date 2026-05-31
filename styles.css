@@ -919,6 +919,19 @@ h2 {
   color: #ffd1ca;
 }
 
+.tile.monster .monster-status {
+  position: absolute;
+  top: 0.08rem;
+  right: 0.14rem;
+  font-size: 0.72rem;
+  line-height: 1;
+  font-weight: 900;
+  color: #7ec3ff;
+  text-shadow: 0 0 8px rgba(63, 150, 255, 0.95);
+  pointer-events: none;
+  z-index: 3;
+}
+
 .tile.item {
   background: #21472a;
   color: #d5ffd0;
