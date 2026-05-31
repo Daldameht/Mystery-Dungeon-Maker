@@ -2319,6 +2319,8 @@ h2 {
 .item-pool-list {
   display: grid;
   gap: 0.6rem;
+  content-visibility: auto;
+  contain-intrinsic-size: 1200px;
 }
 
 .trap-pool-list,
@@ -2329,6 +2331,8 @@ h2 {
 .enemy-type-list {
   display: grid;
   gap: 0.6rem;
+  content-visibility: auto;
+  contain-intrinsic-size: 900px;
 }
 
 .enemy-drop-controls {
@@ -2715,6 +2719,8 @@ h2 {
   grid-column: 1 / -1;
   border-top: 1px solid rgba(245, 236, 210, 0.1);
   padding-top: 0.55rem;
+  content-visibility: auto;
+  contain-intrinsic-size: 220px;
 }
 
 .enemy-level-skills summary {
@@ -2727,6 +2733,8 @@ h2 {
   display: grid;
   gap: 0.45rem;
   padding-top: 0.55rem;
+  content-visibility: auto;
+  contain-intrinsic-size: 180px;
 }
 
 .enemy-skill-row {
@@ -2867,6 +2875,8 @@ h2 {
   display: grid;
   gap: 0.45rem;
   padding-top: 0.45rem;
+  content-visibility: auto;
+  contain-intrinsic-size: 180px;
 }
 
 .item-effect-row {

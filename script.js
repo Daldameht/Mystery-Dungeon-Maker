@@ -1938,6 +1938,9 @@ function renderTrapPoolControls(rules = undefined) {
 }
 
 function readTrapPoolRules() {
+  if (shouldUseRecipeBackedSectionState(trapPoolDetails, trapPoolList)) {
+    return normalizeTrapPoolRules(game.recipe?.trapPoolRules);
+  }
   return Array.from(trapPoolList.querySelectorAll(".trap-row")).map((row, index) => {
     const fallback = defaultTrapRules.find((rule) => rule.id === row.dataset.trapId) ?? makeDefaultTrapRule(index);
     return normalizeTrapRule({
@@ -2201,6 +2204,9 @@ function renderSigilPoolControls(rules = undefined) {
 }
 
 function readSigilPoolRules() {
+  if (shouldUseRecipeBackedSectionState(sigilPoolDetails, sigilPoolList)) {
+    return normalizeSigilPoolRules(game.recipe?.sigilPoolRules);
+  }
   return Array.from(sigilPoolList.querySelectorAll(".sigil-row")).map((row, index) => {
     const fallback = defaultSigilRules.find((rule) => rule.id === row.dataset.sigilId) ?? makeDefaultSigilRule(index);
     return normalizeSigilRule({
@@ -3685,6 +3691,9 @@ function renderSpecialAttackControls(rules = undefined) {
 }
 
 function readSpecialAttackRules() {
+  if (shouldUseRecipeBackedSectionState(specialAttackDetails, specialAttackList)) {
+    return normalizeSpecialAttackRules(game.recipe?.specialAttackRules);
+  }
   return Array.from(specialAttackList.querySelectorAll(".special-attack-row")).map((row) => {
     const rawPattern = Array.from({ length: SPECIAL_ATTACK_GRID_SIZE * SPECIAL_ATTACK_GRID_SIZE }, () => false);
     row.querySelectorAll(".special-attack-cell[data-index]").forEach((cell) => {
@@ -4134,6 +4143,9 @@ function renderRunePoolControls(rules = undefined) {
 }
 
 function readRunePoolRules() {
+  if (shouldUseRecipeBackedSectionState(runePoolDetails, runePoolList)) {
+    return normalizeRunePoolRules(game.recipe?.runePoolRules);
+  }
   return Array.from(runePoolList.querySelectorAll(".rune-row")).map((row) => {
     const fallback = defaultRuneRules.find((rule) => rule.id === row.dataset.runeId) ?? defaultRuneRules[0];
     return normalizeRuneRule({
@@ -4455,6 +4467,14 @@ function normalizeEnemySkills(skills = undefined) {
   return incoming.map((skill) => normalizeEnemySkill(skill, {}));
 }
 
+function getEnemySkillSummaryText(skills = undefined) {
+  const labels = normalizeEnemySkills(skills)
+    .filter((skill) => skill.enabled)
+    .map((skill) => getEnemySkillDefinition(skill.type)?.label ?? skill.type)
+    .filter(Boolean);
+  return labels.join(", ");
+}
+
 function describeEnemySkill(skill) {
   const definition = getEnemySkillDefinition(skill.type);
   const parts = [definition.label, definition.passive ? `Trigger ${skill.chance}%` : `Use ${skill.chance}%`];
@@ -4646,6 +4666,9 @@ function readEnemyTypeRules() {
   if (!enemyTypeList) {
     return [];
   }
+  if (shouldUseRecipeBackedSectionState(enemyTypeDetails, enemyTypeList)) {
+    return normalizeEnemyTypeRules(game.recipe?.enemyTypeRules);
+  }
   return Array.from(enemyTypeList.querySelectorAll(".enemy-type-row")).map((row) => normalizeEnemyTypeRule({
     id: row.dataset.enemyTypeId,
     name: row.querySelector('[data-target="name"]')?.value,
@@ -4754,6 +4777,7 @@ function renderEnemyPoolControls(rules = undefined) {
     body.append(familyToggle);
 
     family.levels.forEach((level) => {
+      const skillSummaryText = getEnemySkillSummaryText(level.skills);
       const row = document.createElement("div");
       row.className = "enemy-level-row";
       row.dataset.family = family.familyId;
@@ -4766,7 +4790,7 @@ function renderEnemyPoolControls(rules = undefined) {
         <label>Def<input type="number" min="0" data-target="defense" value="${level.defense}" /></label>
         <label>XP<input type="number" min="0" data-target="xp" value="${level.xp}" /></label>
         <details class="enemy-level-skills">
-          <summary>Skills</summary>
+          <summary>Skills${skillSummaryText ? ` <span class="item-pool-rune-summary">${escapeHtml(skillSummaryText)}</span>` : ""}</summary>
           <div class="enemy-skill-list">
             ${normalizeEnemySkills(level.skills).map((skill) => renderEnemySkillRow(skill)).join("") || '<p class="item-pool-tip">No skills yet.</p>'}
           </div>
@@ -6613,6 +6637,11 @@ function applyRecipe(recipe) {
   updateHungerControls();
   updateUnidentifiedControls();
   updateOutputs();
+  syncAndMaybeUnloadSection(runePoolDetails, runePoolList, readRunePoolRules, "runePoolRules");
+  syncAndMaybeUnloadSection(specialAttackDetails, specialAttackList, readSpecialAttackRules, "specialAttackRules");
+  syncAndMaybeUnloadSection(trapPoolDetails, trapPoolList, readTrapPoolRules, "trapPoolRules");
+  syncAndMaybeUnloadSection(sigilPoolDetails, sigilPoolList, readSigilPoolRules, "sigilPoolRules");
+  syncAndMaybeUnloadSection(enemyTypeDetails, enemyTypeList, readEnemyTypeRules, "enemyTypeRules");
 }
 
 function applyCustomGoal(goal = {}) {
@@ -16886,6 +16915,53 @@ function interactionsLocked() {
   return game.ended === true || game.processingTurn === true || game.animatingProjectile === true || game.animatingMelee === true;
 }
 
+let editorRenderQueued = false;
+
+function scheduleEditorRender() {
+  if (editorRenderQueued) {
+    return;
+  }
+  editorRenderQueued = true;
+  window.requestAnimationFrame(() => {
+    editorRenderQueued = false;
+    render();
+  });
+}
+
+const runePoolDetails = document.querySelector(".rune-pool-settings");
+const specialAttackDetails = document.querySelector(".special-attack-settings");
+const trapPoolDetails = document.querySelector(".trap-pool-settings");
+const sigilPoolDetails = document.querySelector(".sigil-pool-settings");
+const enemyTypeDetails = document.querySelector(".enemy-type-settings");
+
+function shouldUseRecipeBackedSectionState(detailsElement, listElement) {
+  return Boolean(detailsElement && listElement && !detailsElement.open && listElement.childElementCount === 0 && game.recipe);
+}
+
+function syncAndMaybeUnloadSection(detailsElement, listElement, readFn, recipeKey) {
+  if (!detailsElement || !listElement || !game.recipe) {
+    return;
+  }
+  if (detailsElement.open) {
+    if (listElement.childElementCount === 0) {
+      return;
+    }
+    game.recipe[recipeKey] = readFn();
+    return;
+  }
+  if (listElement.childElementCount > 0) {
+    game.recipe[recipeKey] = readFn();
+    listElement.innerHTML = "";
+  }
+}
+
+function hydrateSectionIfNeeded(detailsElement, listElement, applyFn, recipeKey) {
+  if (!detailsElement || !listElement || !detailsElement.open || listElement.childElementCount > 0) {
+    return;
+  }
+  applyFn(game.recipe?.[recipeKey]);
+}
+
 function ensureAtLeastOneItemPoolEntry(kind) {
   const rows = Array.from(itemPoolList.querySelectorAll(".item-pool-row"))
     .filter((row) => itemDefinitions[row.dataset.item]?.kind === kind);
@@ -17068,29 +17144,40 @@ itemPoolList.addEventListener("change", (event) => {
   if (specialAttackToggle) {
     updateItemPoolSpecialAttackSummary(specialAttackToggle.closest(".item-pool-row"));
   }
-  syncItemDefinitionsFromRules(readItemPoolRules());
-  renderConditionalItemUseControls(readEnvironmentalEffects().find((effect) => effect.id === "conditionalItemUse") ?? {});
+  const itemRules = readItemPoolRules();
+  syncItemDefinitionsFromRules(itemRules);
   updateItemPoolRowStates();
   updateItemPoolCategoryToggles();
-  refreshStartingLoadoutControls();
-  renderCustomGoalControls(readCustomGoal());
+  const affectsCatalogLists = Boolean(event.target.closest('[data-target="name"], [data-target="enabled"], [data-category-toggle]'));
+  if (affectsCatalogLists) {
+    renderConditionalItemUseControls(readEnvironmentalEffects().find((effect) => effect.id === "conditionalItemUse") ?? {});
+    refreshStartingLoadoutControls();
+    renderCustomGoalControls(readCustomGoal());
+  }
   if (game.recipe) {
-    game.recipe.itemPoolRules = readItemPoolRules();
-    game.recipe.customGoal = readCustomGoal();
-    render();
+    game.recipe.itemPoolRules = itemRules;
+    if (affectsCatalogLists) {
+      game.recipe.customGoal = readCustomGoal();
+    }
+    scheduleEditorRender();
   }
 });
 
-itemPoolList.addEventListener("input", () => {
-  syncItemDefinitionsFromRules(readItemPoolRules());
-  renderConditionalItemUseControls(readEnvironmentalEffects().find((effect) => effect.id === "conditionalItemUse") ?? {});
+itemPoolList.addEventListener("input", (event) => {
+  const itemRules = readItemPoolRules();
+  syncItemDefinitionsFromRules(itemRules);
   updateItemPoolRowStates();
-  refreshStartingLoadoutControls();
-  renderCustomGoalControls(readCustomGoal());
+  const affectsCatalogLists = Boolean(event.target.closest('[data-target="name"]'));
+  if (affectsCatalogLists) {
+    renderConditionalItemUseControls(readEnvironmentalEffects().find((effect) => effect.id === "conditionalItemUse") ?? {});
+    refreshStartingLoadoutControls();
+    renderCustomGoalControls(readCustomGoal());
+  }
   if (game.recipe) {
-    game.recipe.itemPoolRules = readItemPoolRules();
-    game.recipe.customGoal = readCustomGoal();
-    render();
+    game.recipe.itemPoolRules = itemRules;
+    if (affectsCatalogLists) {
+      game.recipe.customGoal = readCustomGoal();
+    }
   }
 });
 
@@ -17101,7 +17188,7 @@ itemPoolList.addEventListener("click", (event) => {
     refreshStartingLoadoutControls();
     if (game.recipe) {
       game.recipe.itemPoolRules = readItemPoolRules();
-      render();
+      scheduleEditorRender();
     }
     return;
   }
@@ -17113,7 +17200,7 @@ itemPoolList.addEventListener("click", (event) => {
     refreshStartingLoadoutControls();
     if (game.recipe) {
       game.recipe.itemPoolRules = readItemPoolRules();
-      render();
+      scheduleEditorRender();
     }
     return;
   }
@@ -17138,7 +17225,7 @@ itemPoolList.addEventListener("click", (event) => {
   if (game.recipe) {
     game.recipe.itemPoolRules = readItemPoolRules();
     game.recipe.customGoal = readCustomGoal();
-    render();
+    scheduleEditorRender();
   }
 });
 
@@ -17281,6 +17368,22 @@ trapsVisibleEnabled?.addEventListener("change", () => {
   }
 });
 
+[
+  { details: runePoolDetails, list: runePoolList, read: readRunePoolRules, apply: applyRunePoolRules, key: "runePoolRules" },
+  { details: specialAttackDetails, list: specialAttackList, read: readSpecialAttackRules, apply: applySpecialAttackRules, key: "specialAttackRules" },
+  { details: trapPoolDetails, list: trapPoolList, read: readTrapPoolRules, apply: applyTrapPoolRules, key: "trapPoolRules" },
+  { details: sigilPoolDetails, list: sigilPoolList, read: readSigilPoolRules, apply: applySigilPoolRules, key: "sigilPoolRules" },
+  { details: enemyTypeDetails, list: enemyTypeList, read: readEnemyTypeRules, apply: applyEnemyTypeRules, key: "enemyTypeRules" },
+].forEach(({ details, list, read, apply, key }) => {
+  details?.addEventListener("toggle", () => {
+    if (details.open) {
+      hydrateSectionIfNeeded(details, list, apply, key);
+      return;
+    }
+    syncAndMaybeUnloadSection(details, list, read, key);
+  });
+});
+
 enemyPoolList.addEventListener("change", (event) => {
   const familyToggle = event.target.closest("[data-family-toggle]");
   if (familyToggle) {
@@ -17293,30 +17396,39 @@ enemyPoolList.addEventListener("change", (event) => {
   updateEnemyFamilySummaries();
   updateEnemyFamilyToggles();
   updateEnemyPursuitControls();
-  renderEnemyTypeControls(readEnemyTypeRules());
-  renderRunePoolControls(readRunePoolRules());
-  renderCustomGoalControls(readCustomGoal());
+  const affectsFamilyReferences = Boolean(event.target.closest('[data-target="familyName"], [data-family-toggle], [data-target="enabled"]'));
+  if (affectsFamilyReferences) {
+    renderEnemyTypeControls(readEnemyTypeRules());
+    renderRunePoolControls(readRunePoolRules());
+    renderCustomGoalControls(readCustomGoal());
+  }
   if (game.recipe) {
     game.recipe.enemyPoolRules = readEnemyPoolRules();
-    game.recipe.enemyTypeRules = readEnemyTypeRules();
-    game.recipe.runePoolRules = readRunePoolRules();
-    game.recipe.customGoal = readCustomGoal();
-    render();
+    if (affectsFamilyReferences) {
+      game.recipe.enemyTypeRules = readEnemyTypeRules();
+      game.recipe.runePoolRules = readRunePoolRules();
+      game.recipe.customGoal = readCustomGoal();
+    }
+    scheduleEditorRender();
   }
 });
 
-enemyPoolList.addEventListener("input", () => {
+enemyPoolList.addEventListener("input", (event) => {
   refreshEnemySkillSummaries();
   updateEnemyFamilySummaries();
-  renderEnemyTypeControls(readEnemyTypeRules());
-  renderRunePoolControls(readRunePoolRules());
-  renderCustomGoalControls(readCustomGoal());
+  const affectsFamilyReferences = Boolean(event.target.closest('[data-target="familyName"]'));
+  if (affectsFamilyReferences) {
+    renderEnemyTypeControls(readEnemyTypeRules());
+    renderRunePoolControls(readRunePoolRules());
+    renderCustomGoalControls(readCustomGoal());
+  }
   if (game.recipe) {
     game.recipe.enemyPoolRules = readEnemyPoolRules();
-    game.recipe.enemyTypeRules = readEnemyTypeRules();
-    game.recipe.runePoolRules = readRunePoolRules();
-    game.recipe.customGoal = readCustomGoal();
-    render();
+    if (affectsFamilyReferences) {
+      game.recipe.enemyTypeRules = readEnemyTypeRules();
+      game.recipe.runePoolRules = readRunePoolRules();
+      game.recipe.customGoal = readCustomGoal();
+    }
   }
 });
 
@@ -17379,7 +17491,7 @@ enemyPoolList.addEventListener("click", (event) => {
       game.recipe.enemyTypeRules = readEnemyTypeRules();
       game.recipe.runePoolRules = readRunePoolRules();
       game.recipe.customGoal = readCustomGoal();
-      render();
+      scheduleEditorRender();
     }
     return;
   }
@@ -17397,7 +17509,7 @@ enemyPoolList.addEventListener("click", (event) => {
       game.recipe.enemyTypeRules = readEnemyTypeRules();
       game.recipe.runePoolRules = readRunePoolRules();
       game.recipe.customGoal = readCustomGoal();
-      render();
+      scheduleEditorRender();
     }
     return;
   }
@@ -17415,7 +17527,7 @@ enemyPoolList.addEventListener("click", (event) => {
     game.recipe.enemyTypeRules = readEnemyTypeRules();
     game.recipe.runePoolRules = readRunePoolRules();
     game.recipe.customGoal = readCustomGoal();
-    render();
+    scheduleEditorRender();
   }
 });
 
@@ -17431,16 +17543,19 @@ enemyAddButton.addEventListener("click", () => {
     game.recipe.enemyTypeRules = readEnemyTypeRules();
     game.recipe.runePoolRules = readRunePoolRules();
     game.recipe.customGoal = readCustomGoal();
-    render();
+    scheduleEditorRender();
   }
 });
 
-enemyTypeList?.addEventListener("input", () => {
-  renderRunePoolControls(readRunePoolRules());
+enemyTypeList?.addEventListener("input", (event) => {
+  if (event.target.closest('[data-target="typeName"]')) {
+    renderRunePoolControls(readRunePoolRules());
+  }
   if (game.recipe) {
     game.recipe.enemyTypeRules = readEnemyTypeRules();
-    game.recipe.runePoolRules = readRunePoolRules();
-    render();
+    if (event.target.closest('[data-target="typeName"]')) {
+      game.recipe.runePoolRules = readRunePoolRules();
+    }
   }
 });
 
@@ -17450,7 +17565,7 @@ enemyTypeList?.addEventListener("change", () => {
   if (game.recipe) {
     game.recipe.enemyTypeRules = readEnemyTypeRules();
     game.recipe.runePoolRules = readRunePoolRules();
-    render();
+    scheduleEditorRender();
   }
 });
 
@@ -17465,7 +17580,7 @@ enemyTypeList?.addEventListener("click", (event) => {
   if (game.recipe) {
     game.recipe.enemyTypeRules = readEnemyTypeRules();
     game.recipe.runePoolRules = readRunePoolRules();
-    render();
+    scheduleEditorRender();
   }
 });
 
@@ -17830,37 +17945,40 @@ rarityList.addEventListener("change", () => {
   }
 });
 
-runePoolList.addEventListener("input", () => {
-  const itemRules = readItemPoolRules();
+runePoolList.addEventListener("input", (event) => {
   updateRuneRowStates();
+  const affectsItemPoolAttachmentLists = Boolean(event.target.closest('[data-target="name"]'));
   if (game.recipe) {
     game.recipe.runePoolRules = readRunePoolRules();
-    render();
+    scheduleEditorRender();
   }
-  renderItemPoolControls(itemRules);
+  if (affectsItemPoolAttachmentLists) {
+    renderItemPoolControls(readItemPoolRules());
+  }
 });
 
-runePoolList.addEventListener("change", () => {
-  const itemRules = readItemPoolRules();
+runePoolList.addEventListener("change", (event) => {
+  const affectsItemPoolAttachmentLists = Boolean(event.target.closest('[data-target="enabled"], [data-target="name"], [data-target="effectType"], [data-target="appliesTo"]'));
   renderRunePoolControls(readRunePoolRules());
   updateRuneRowStates();
   if (game.recipe) {
     game.recipe.runePoolRules = readRunePoolRules();
-    render();
+    scheduleEditorRender();
   }
-  renderItemPoolControls(itemRules);
+  if (affectsItemPoolAttachmentLists) {
+    renderItemPoolControls(readItemPoolRules());
+  }
 });
 
 runeEnableAll?.addEventListener("change", () => {
-  const itemRules = readItemPoolRules();
   setSectionEntriesEnabled(runePoolList, runeEnableAll.checked);
   renderRunePoolControls(readRunePoolRules());
   updateRuneRowStates();
   if (game.recipe) {
     game.recipe.runePoolRules = readRunePoolRules();
-    render();
+    scheduleEditorRender();
   }
-  renderItemPoolControls(itemRules);
+  renderItemPoolControls(readItemPoolRules());
 });
 
 runePoolList.addEventListener("click", (event) => {
@@ -17868,23 +17986,21 @@ runePoolList.addEventListener("click", (event) => {
   if (!button) {
     return;
   }
-  const itemRules = readItemPoolRules();
   button.closest(".rune-row")?.remove();
   if (game.recipe) {
     game.recipe.runePoolRules = readRunePoolRules();
-    render();
+    scheduleEditorRender();
   }
-  renderItemPoolControls(itemRules);
+  renderItemPoolControls(readItemPoolRules());
 });
 
 runeAddButton.addEventListener("click", () => {
-  const itemRules = readItemPoolRules();
   addRuneRule();
   if (game.recipe) {
     game.recipe.runePoolRules = readRunePoolRules();
-    render();
+    scheduleEditorRender();
   }
-  renderItemPoolControls(itemRules);
+  renderItemPoolControls(readItemPoolRules());
 });
 
 [
