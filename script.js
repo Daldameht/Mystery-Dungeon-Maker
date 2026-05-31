@@ -2322,6 +2322,11 @@ const itemEffectDefinitions = [
   { id: "scrollGamblers", label: "Gambler's", kinds: ["scroll"], valueLabel: "Gold", min: 0, step: 1, defaultValue: 10000 },
   { id: "scrollFixer", label: "Fixer", kinds: ["scroll"], valueLabel: "On", min: 1, step: 1, booleanValue: true },
   { id: "scrollBlank", label: "Blank", kinds: ["scroll"], valueLabel: "On", min: 1, step: 1, booleanValue: true },
+  { id: "stringIdentify", label: "Identifier", kinds: ["string"], valueLabel: "On", min: 1, step: 1, booleanValue: true },
+  { id: "stringTransmute", label: "Transmutation", kinds: ["string"], valueLabel: "On", min: 1, step: 1, booleanValue: true },
+  { id: "stringExorcism", label: "Exorcism", kinds: ["string"], valueLabel: "On", min: 1, step: 1, booleanValue: true },
+  { id: "stringUpgrade", label: "Upgrading", kinds: ["string"], valueLabel: "Upgrade+", min: 1, step: 1, defaultValue: 1 },
+  { id: "stringRejuvenation", label: "Rejuvenation", kinds: ["string"], valueLabel: "On", min: 1, step: 1, booleanValue: true },
 ];
 
 function getItemEffectDefinition(effectType = "heal") {
@@ -2329,7 +2334,10 @@ function getItemEffectDefinition(effectType = "heal") {
 }
 
 function getAllowedItemEffectDefinitions(kind = "grass") {
-  return itemEffectDefinitions.filter((definition) => definition.kinds.includes(kind));
+  return itemEffectDefinitions.filter((definition) => (
+    definition.kinds.includes(kind)
+    && !(kind === "string" && ["stringIdentify", "stringTransmute", "stringExorcism", "stringUpgrade", "stringRejuvenation"].includes(definition.id))
+  ));
 }
 
 function getItemEffectTooltip(effectType = "heal") {
@@ -2452,6 +2460,16 @@ function getItemEffectTooltip(effectType = "heal") {
       return "Fully restores HP.";
     case "scrollBlank":
       return "Transforms this blank scroll into any other enabled scroll except another blank scroll.";
+    case "stringIdentify":
+      return "Items stored in this string become identified.";
+    case "stringTransmute":
+      return "Items stored in this string transform into a random enabled item from the chosen categories.";
+    case "stringExorcism":
+      return "Items stored in this string have their curses removed.";
+    case "stringUpgrade":
+      return "Weapons or shields stored in this string gain the chosen amount of upgrade value.";
+    case "stringRejuvenation":
+      return "Using the string fully restores HP.";
     default:
       return "No tooltip written yet for this effect.";
   }
@@ -2459,12 +2477,16 @@ function getItemEffectTooltip(effectType = "heal") {
 
 function makeDefaultItemEffect(kind = "grass") {
   const definition = getAllowedItemEffectDefinitions(kind)[0] ?? itemEffectDefinitions[0];
-  return {
+  const effect = {
     enabled: true,
     type: definition.id,
     value: definition.booleanValue ? 1 : Number(definition.defaultValue ?? Math.max(0, definition.min ?? 0)),
     extra: definition.defaultExtra ?? 0,
   };
+  if (definition.id === "stringTransmute") {
+    effect.categories = itemCategories.map((category) => category.id);
+  }
+  return effect;
 }
 
 function normalizeItemEffect(effect = {}, kind = "grass") {
@@ -2483,7 +2505,7 @@ function normalizeItemEffect(effect = {}, kind = "grass") {
       }[effect?.type] ?? effect?.type)
     : effect?.type;
   const definition = allowed.find((entry) => entry.id === normalizedType) ?? fallback;
-  return {
+  const normalized = {
     enabled: effect?.enabled !== false,
     type: definition.id,
     value: definition.booleanValue
@@ -2495,6 +2517,12 @@ function normalizeItemEffect(effect = {}, kind = "grass") {
       ? Number(effect.extra)
       : (definition.defaultExtra ?? 0),
   };
+  if (definition.id === "stringTransmute") {
+    normalized.categories = Array.isArray(effect?.categories)
+      ? effect.categories.filter((categoryId) => itemCategories.some((category) => category.id === categoryId))
+      : itemCategories.map((category) => category.id);
+  }
+  return normalized;
 }
 
 function legacyItemEffectsFromRule(rule = {}) {
@@ -2679,10 +2707,19 @@ function normalizeItemPoolRule(rule, fallback = {}) {
       ? Math.max(0, Number(base.charges ?? fallback.charges ?? 0))
       : undefined,
     stringEffect: base.kind === "string"
-      ? (["preservation", "synthesis", "cashing"].includes(base.stringEffect) ? base.stringEffect : (fallback.stringEffect ?? "preservation"))
+      ? (["preservation", "synthesis", "cashing", "identifier", "transmutation", "exorcism", "upgrading", "rejuvenation"].includes(base.stringEffect) ? base.stringEffect : (fallback.stringEffect ?? "preservation"))
       : undefined,
     uses: base.kind === "string"
       ? Math.max(1, Number(base.uses ?? fallback.uses ?? 1))
+      : undefined,
+    stringAmount: base.kind === "string"
+      ? Math.max(1, Number(base.stringAmount ?? fallback.stringAmount ?? 1))
+      : undefined,
+    stringCategories: base.kind === "string"
+      ? Array.from(new Set(
+        (Array.isArray(base.stringCategories) ? base.stringCategories : fallback.stringCategories ?? itemCategories.map((category) => category.id))
+          .filter((categoryId) => itemCategories.some((category) => category.id === categoryId)),
+      ))
       : undefined,
     heal: base.kind === "grass" ? Math.max(0, Number(base.heal ?? fallback.heal ?? 0)) : undefined,
     attackBuff: base.kind === "grass" ? Number(base.attackBuff ?? fallback.attackBuff ?? 0) : undefined,
@@ -2773,6 +2810,8 @@ function syncItemDefinitionsFromRules(rules = []) {
       kind: rule.kind,
       handType: rule.handType,
       stringEffect: rule.stringEffect,
+      stringAmount: rule.stringAmount,
+      stringCategories: rule.stringCategories,
       element: rule.element,
       scrollEffect: rule.scrollEffect,
       sellValue: rule.sellValue,
@@ -2812,6 +2851,16 @@ function renderItemEffectRow(effect, kind, index) {
          <input type="number" data-target="effectExtra" min="${definition.extraMin ?? 0}" step="${definition.extraStep ?? 1}" value="${Number(effect.extra ?? definition.defaultExtra ?? 0)}" />
        </label>`
     : "";
+  const categoryChecklist = definition.id === "stringTransmute"
+    ? `<div class="item-effect-category-list">
+         ${itemCategories.map((category) => `
+           <label class="item-pool-category-option">
+             <input type="checkbox" data-target="effectCategory" value="${escapeHtml(category.id)}"${(effect.categories ?? itemCategories.map((entry) => entry.id)).includes(category.id) ? " checked" : ""} />
+             ${escapeHtml(category.name)}
+           </label>
+         `).join("")}
+       </div>`
+    : "";
   return `
     <div class="item-effect-row" data-effect-index="${index}" title="${tooltip}">
       <label class="inline-check">
@@ -2825,6 +2874,7 @@ function renderItemEffectRow(effect, kind, index) {
       ${valueInput}
       ${extraInput}
       <button type="button" data-action="remove_item_effect">Remove</button>
+      ${categoryChecklist}
     </div>
   `;
 }
@@ -2944,12 +2994,36 @@ function renderItemPoolControls(rules = undefined) {
                  <option value="preservation"${rule.stringEffect === "preservation" ? " selected" : ""}>Preservation</option>
                  <option value="synthesis"${rule.stringEffect === "synthesis" ? " selected" : ""}>Synthesis</option>
                  <option value="cashing"${rule.stringEffect === "cashing" ? " selected" : ""}>Cashing</option>
+                 <option value="identifier"${rule.stringEffect === "identifier" ? " selected" : ""}>Identifier</option>
+                 <option value="transmutation"${rule.stringEffect === "transmutation" ? " selected" : ""}>Transmutation</option>
+                 <option value="exorcism"${rule.stringEffect === "exorcism" ? " selected" : ""}>Exorcism</option>
+                 <option value="upgrading"${rule.stringEffect === "upgrading" ? " selected" : ""}>Upgrading</option>
+                 <option value="rejuvenation"${rule.stringEffect === "rejuvenation" ? " selected" : ""}>Rejuvenation</option>
                </select>
              </label>
              <label class="item-pool-stat">
                <span>Uses</span>
                <input type="number" min="1" step="1" data-target="uses" value="${rule.uses ?? 1}" />
              </label>`
+          : "";
+        const stringModeStatControl = rule.kind === "string" && rule.stringEffect === "upgrading"
+          ? `<label class="item-pool-stat">
+              <span>Upgrade +</span>
+              <input type="number" min="1" step="1" data-target="stringAmount" value="${rule.stringAmount ?? 1}" />
+            </label>`
+          : "";
+        const stringCategoryControl = rule.kind === "string" && rule.stringEffect === "transmutation"
+          ? `<details class="item-pool-eligible">
+              <summary>Transmutation Categories</summary>
+              <div class="item-pool-category-list">
+                ${itemCategories.map((category) => `
+                  <label class="item-pool-category-option">
+                    <input type="checkbox" data-target="stringCategory" value="${escapeHtml(category.id)}"${(rule.stringCategories ?? []).includes(category.id) ? " checked" : ""} />
+                    ${escapeHtml(category.name)}
+                  </label>
+                `).join("")}
+              </div>
+            </details>`
           : "";
         const sellControl = rule.kind !== "gold"
           ? `<label class="item-pool-stat item-pool-price">
@@ -3036,11 +3110,13 @@ function renderItemPoolControls(rules = undefined) {
           ${statControl}
           ${chargeControl}
           ${stringControls}
+          ${stringModeStatControl}
           ${sellControl}
           ${scrollFlag}
           ${utilityStatControl}
           ${itemActionsMarkup}
           ${effectEditor}
+          ${stringCategoryControl}
           ${utilityEligibleControl}
           ${runeControl}
           ${specialAttackControl}
@@ -3094,6 +3170,8 @@ function readItemPoolRules() {
       charges: row.querySelector('[data-target="charges"]') ? Math.max(0, Number(row.querySelector('[data-target="charges"]').value)) : undefined,
       stringEffect: row.querySelector('[data-target="stringEffect"]')?.value ?? undefined,
       uses: row.querySelector('[data-target="uses"]') ? Math.max(1, Number(row.querySelector('[data-target="uses"]').value)) : undefined,
+      stringAmount: row.querySelector('[data-target="stringAmount"]') ? Math.max(1, Number(row.querySelector('[data-target="stringAmount"]').value)) : undefined,
+      stringCategories: Array.from(row.querySelectorAll('[data-target="stringCategory"]:checked')).map((checkbox) => checkbox.value),
       sellValue: row.querySelector('[data-target="sellValue"]') ? Math.max(0, Number(row.querySelector('[data-target="sellValue"]').value)) : undefined,
       buyValue: row.querySelector('[data-target="buyValue"]') ? Math.max(0, Number(row.querySelector('[data-target="buyValue"]').value)) : undefined,
       inventoryEffect: row.querySelector('[data-target="inventoryEffect"]')?.checked ?? undefined,
@@ -3106,6 +3184,7 @@ function readItemPoolRules() {
         type: effectRow.querySelector('[data-target="effectType"]')?.value,
         value: effectRow.querySelector('[data-target="effectValue"]')?.value,
         extra: effectRow.querySelector('[data-target="effectExtra"]')?.value,
+        categories: Array.from(effectRow.querySelectorAll('[data-target="effectCategory"]:checked')).map((checkbox) => checkbox.value),
       }, row.dataset.kind)),
     };
     return applyLegacyItemFieldsFromEffects(rule);
@@ -8895,6 +8974,12 @@ function createItemInstance(itemId, cursed = false, rarity = null, overrides = n
   if (overrides?.stringEffect !== undefined) {
     instance.stringEffect = String(overrides.stringEffect);
   }
+  if (overrides?.stringAmount !== undefined) {
+    instance.stringAmount = Math.max(1, Number(overrides.stringAmount));
+  }
+  if (Array.isArray(overrides?.stringCategories)) {
+    instance.stringCategories = [...new Set(overrides.stringCategories.filter((categoryId) => typeof categoryId === "string" && categoryId.trim()))];
+  }
   if (overrides?.uses !== undefined) {
     instance.uses = Math.max(1, Number(overrides.uses));
     instance.stringUsesRemaining = Math.max(0, Number(overrides.stringUsesRemaining ?? overrides.uses));
@@ -9019,6 +9104,8 @@ function createSpawnedItem(recipe, itemId, random) {
       defense: rule?.defense,
       charges: rule?.charges,
       stringEffect: rule?.stringEffect,
+      stringAmount: rule?.stringAmount,
+      stringCategories: rule?.stringCategories,
       uses: rule?.uses,
       heal: rule?.heal,
       attackBuff: rule?.attackBuff,
@@ -11061,6 +11148,21 @@ function getEnabledScrollRulesExcluding(itemId) {
     .filter((rule) => !getItemRuleEffects(rule).some((effect) => effect.enabled && effect.type === "scrollBlank"));
 }
 
+function getRandomStringTransmutationRule(categories = []) {
+  const allowedCategories = Array.isArray(categories) && categories.length > 0
+    ? categories
+    : itemCategories.map((category) => category.id);
+  const rules = getSpawnableItemPoolRules(game.recipe)
+    .filter((rule) => {
+      const categoryId = getItemCategoryId(rule.itemId);
+      return allowedCategories.includes(categoryId) && itemDefinitions[rule.itemId]?.kind !== "gold";
+    });
+  if (rules.length === 0) {
+    return null;
+  }
+  return rules[Math.floor(Math.random() * rules.length)] ?? null;
+}
+
 function removeRandomRunesFromEntry(entry, count = 1) {
   const runeIds = Array.isArray(entry?.runeIds) ? [...entry.runeIds] : [];
   if (runeIds.length === 0) {
@@ -11270,6 +11372,98 @@ function renderStringActionPanel() {
       card.append(actions);
       stringActionList.append(card);
     });
+    return;
+  }
+
+  if (item?.stringEffect === "identifier") {
+    const candidates = getStringTransformCandidates(pending.entry, { excludeStrings: false });
+    const intro = document.createElement("article");
+    intro.className = "item-card";
+    intro.innerHTML = `<strong>Identifier</strong><p>Choose an item to identify.</p>`;
+    stringActionList.append(intro);
+    candidates.forEach((target, index) => {
+      const card = document.createElement("article");
+      card.className = `${getItemCardClass(target.entry)} compact-item-card`;
+      card.style.cssText = buildRarityCardStyle(target.entry);
+      card.append(makeItemSummary(target.entry));
+      const actions = document.createElement("div");
+      actions.className = "item-actions";
+      actions.append(makeInventoryAction("Identify", "string_identify", index));
+      card.append(actions);
+      stringActionList.append(card);
+    });
+    return;
+  }
+
+  if (item?.stringEffect === "transmutation") {
+    const candidates = getStringTransformCandidates(pending.entry, { excludeStrings: true });
+    const intro = document.createElement("article");
+    intro.className = "item-card";
+    intro.innerHTML = `<strong>Transmutation</strong><p>Choose an item to transform into a different enabled category item.</p>`;
+    stringActionList.append(intro);
+    candidates.forEach((target, index) => {
+      const card = document.createElement("article");
+      card.className = `${getItemCardClass(target.entry)} compact-item-card`;
+      card.style.cssText = buildRarityCardStyle(target.entry);
+      card.append(makeItemSummary(target.entry));
+      const actions = document.createElement("div");
+      actions.className = "item-actions";
+      actions.append(makeInventoryAction("Transmute", "string_transmute", index));
+      card.append(actions);
+      stringActionList.append(card);
+    });
+    return;
+  }
+
+  if (item?.stringEffect === "exorcism") {
+    const candidates = getStringTransformCandidates(pending.entry, { onlyCursed: true });
+    const intro = document.createElement("article");
+    intro.className = "item-card";
+    intro.innerHTML = `<strong>Exorcism</strong><p>Choose a cursed item to cleanse.</p>`;
+    stringActionList.append(intro);
+    candidates.forEach((target, index) => {
+      const card = document.createElement("article");
+      card.className = `${getItemCardClass(target.entry)} compact-item-card`;
+      card.style.cssText = buildRarityCardStyle(target.entry);
+      card.append(makeItemSummary(target.entry));
+      const actions = document.createElement("div");
+      actions.className = "item-actions";
+      actions.append(makeInventoryAction("Cleanse", "string_exorcise", index));
+      card.append(actions);
+      stringActionList.append(card);
+    });
+    return;
+  }
+
+  if (item?.stringEffect === "upgrading") {
+    const candidates = getStringTransformCandidates(pending.entry, { onlyHands: true });
+    const intro = document.createElement("article");
+    intro.className = "item-card";
+    intro.innerHTML = `<strong>Upgrading</strong><p>Choose a weapon or shield to raise by +${item.stringAmount ?? 1}.</p>`;
+    stringActionList.append(intro);
+    candidates.forEach((target, index) => {
+      const card = document.createElement("article");
+      card.className = `${getItemCardClass(target.entry)} compact-item-card`;
+      card.style.cssText = buildRarityCardStyle(target.entry);
+      card.append(makeItemSummary(target.entry));
+      const actions = document.createElement("div");
+      actions.className = "item-actions";
+      actions.append(makeInventoryAction("Upgrade", "string_upgrade", index));
+      card.append(actions);
+      stringActionList.append(card);
+    });
+    return;
+  }
+
+  if (item?.stringEffect === "rejuvenation") {
+    const intro = document.createElement("article");
+    intro.className = "item-card";
+    intro.innerHTML = `<strong>Rejuvenation</strong><p>Fully restore HP.</p>`;
+    const actions = document.createElement("div");
+    actions.className = "item-actions";
+    actions.append(makeInventoryAction("Restore", "string_rejuvenate", -1));
+    intro.append(actions);
+    stringActionList.append(intro);
   }
 }
 
@@ -12224,6 +12418,24 @@ function describeItem(item) {
     }
     if (item.stringEffect === "cashing") {
       parts.push(`Converts items into gold, ${item.stringUsesRemaining ?? item.uses ?? 1} uses left`);
+    }
+    if (item.stringEffect === "identifier") {
+      parts.push(`Identifies inserted items, ${item.stringUsesRemaining ?? item.uses ?? 1} uses left`);
+    }
+    if (item.stringEffect === "transmutation") {
+      const categories = (item.stringCategories ?? [])
+        .map((categoryId) => itemCategories.find((category) => category.id === categoryId)?.name)
+        .filter(Boolean);
+      parts.push(`Transmutes inserted items into ${categories.join(", ") || "enabled categories"}, ${item.stringUsesRemaining ?? item.uses ?? 1} uses left`);
+    }
+    if (item.stringEffect === "exorcism") {
+      parts.push(`Uncurses inserted items, ${item.stringUsesRemaining ?? item.uses ?? 1} uses left`);
+    }
+    if (item.stringEffect === "upgrading") {
+      parts.push(`Raises inserted gear by +${item.stringAmount ?? 1}, ${item.stringUsesRemaining ?? item.uses ?? 1} uses left`);
+    }
+    if (item.stringEffect === "rejuvenation") {
+      parts.push(`Fully restores HP, ${item.stringUsesRemaining ?? item.uses ?? 1} uses left`);
     }
   }
   if (item.kind === "utility" && item.itemId === "hopeBox") {
@@ -13626,6 +13838,136 @@ function cashItemWithString(targetIndex) {
   clearPendingStringAction();
   spendMenuTurn();
   return true;
+}
+
+function getStringTransformCandidates(stringEntry, options = {}) {
+  return getInventoryOnlyEntries()
+    .filter(({ entry }) => entry !== stringEntry)
+    .filter(({ entry }) => {
+      const item = getItemDefinition(entry);
+      if (options.excludeStrings && item?.kind === "string") {
+        return false;
+      }
+      if (options.onlyCursed && !entry.cursed) {
+        return false;
+      }
+      if (options.onlyHands && item?.kind !== "hand") {
+        return false;
+      }
+      return true;
+    });
+}
+
+function finishStringUse(stringEntry, message) {
+  const remaining = consumeStringUse(stringEntry);
+  trackRunStat("itemsUsed");
+  if (message) {
+    log(message);
+  }
+  if (remaining <= 0) {
+    removeSpecificEntry(stringEntry);
+    log(`${getVisibleItemName(stringEntry)} unravels after its last use.`);
+  }
+  clearPendingStringAction();
+  spendMenuTurn();
+  return true;
+}
+
+function identifyWithString(targetIndex) {
+  const pending = game.pendingStringAction;
+  const stringEntry = pending?.entry;
+  const item = getItemDefinition(stringEntry);
+  if (!stringEntry || item?.stringEffect !== "identifier") {
+    return false;
+  }
+  const candidates = getStringTransformCandidates(stringEntry, { excludeStrings: false });
+  const target = candidates[targetIndex];
+  if (!target?.entry) {
+    render();
+    return false;
+  }
+  identifyItemType(target.entry.itemId);
+  target.entry.curseRevealed = false;
+  return finishStringUse(stringEntry, `${getVisibleItemName(stringEntry)} identifies ${getVisibleItemName(target.entry)}.`);
+}
+
+function transmuteWithString(targetIndex) {
+  const pending = game.pendingStringAction;
+  const stringEntry = pending?.entry;
+  const item = getItemDefinition(stringEntry);
+  if (!stringEntry || item?.stringEffect !== "transmutation") {
+    return false;
+  }
+  const candidates = getStringTransformCandidates(stringEntry, { excludeStrings: true });
+  const target = candidates[targetIndex];
+  if (!target?.entry) {
+    render();
+    return false;
+  }
+  const targetRule = getRandomStringTransmutationRule(item.stringCategories);
+  if (!targetRule) {
+    log(`${getVisibleItemName(stringEntry)} has no enabled categories to transmute into.`);
+    render();
+    return false;
+  }
+  const replacement = createSpawnedItem(game.recipe, targetRule.itemId, Math.random);
+  game.inventory[target.index] = replacement;
+  return finishStringUse(stringEntry, `${getVisibleItemName(stringEntry)} transmutes ${getVisibleItemName(target.entry)} into ${getVisibleItemName(replacement)}.`);
+}
+
+function exorciseWithString(targetIndex) {
+  const pending = game.pendingStringAction;
+  const stringEntry = pending?.entry;
+  const item = getItemDefinition(stringEntry);
+  if (!stringEntry || item?.stringEffect !== "exorcism") {
+    return false;
+  }
+  const candidates = getStringTransformCandidates(stringEntry, { onlyCursed: true });
+  const target = candidates[targetIndex];
+  if (!target?.entry) {
+    render();
+    return false;
+  }
+  target.entry.cursed = false;
+  target.entry.curseRevealed = false;
+  return finishStringUse(stringEntry, `${getVisibleItemName(stringEntry)} removes the curse from ${getVisibleItemName(target.entry)}.`);
+}
+
+function upgradeWithString(targetIndex) {
+  const pending = game.pendingStringAction;
+  const stringEntry = pending?.entry;
+  const item = getItemDefinition(stringEntry);
+  if (!stringEntry || item?.stringEffect !== "upgrading") {
+    return false;
+  }
+  const candidates = getStringTransformCandidates(stringEntry, { onlyHands: true });
+  const target = candidates[targetIndex];
+  if (!target?.entry) {
+    render();
+    return false;
+  }
+  const gained = applyUpgradeToEntry(target.entry, Math.max(1, Number(item.stringAmount ?? 1)), MIN_ITEM_UPGRADE, MAX_ITEM_UPGRADE);
+  if (gained <= 0) {
+    log(`${getVisibleItemName(target.entry)} cannot be upgraded any further.`);
+    render();
+    return false;
+  }
+  return finishStringUse(stringEntry, `${getVisibleItemName(stringEntry)} raises ${getVisibleItemName(target.entry)} by +${gained}.`);
+}
+
+function rejuvenateWithString() {
+  const pending = game.pendingStringAction;
+  const stringEntry = pending?.entry;
+  const item = getItemDefinition(stringEntry);
+  if (!stringEntry || item?.stringEffect !== "rejuvenation") {
+    return false;
+  }
+  const previousHp = game.hp;
+  game.hp = getPlayerMaxHp();
+  const healed = Math.max(0, game.hp - previousHp);
+  trackRunStat("healingRecovered", healed);
+  handleHealingItemEnemySkill(healed);
+  return finishStringUse(stringEntry, `${getVisibleItemName(stringEntry)} fully restores your HP.`);
 }
 
 function applyConsumableEffects(entry, item, options = {}) {
@@ -17696,6 +18038,26 @@ stringActionList.addEventListener("click", (event) => {
   }
   if (button.dataset.action === "string_cash") {
     cashItemWithString(index);
+    return;
+  }
+  if (button.dataset.action === "string_identify") {
+    identifyWithString(index);
+    return;
+  }
+  if (button.dataset.action === "string_transmute") {
+    transmuteWithString(index);
+    return;
+  }
+  if (button.dataset.action === "string_exorcise") {
+    exorciseWithString(index);
+    return;
+  }
+  if (button.dataset.action === "string_upgrade") {
+    upgradeWithString(index);
+    return;
+  }
+  if (button.dataset.action === "string_rejuvenate") {
+    rejuvenateWithString();
   }
 });
 
