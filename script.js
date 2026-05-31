@@ -4584,6 +4584,23 @@ function refreshEnemySkillSummaries() {
   });
 }
 
+function updateEnemyLevelSkillSummary(levelRow) {
+  const details = levelRow?.querySelector(".enemy-level-skills");
+  const summary = details?.querySelector("summary");
+  if (!details || !summary) {
+    return;
+  }
+  const skills = Array.from(levelRow.querySelectorAll(".enemy-skill-row")).map((skillRow) => readEnemySkillFromRow(skillRow));
+  const skillSummaryText = getEnemySkillSummaryText(skills);
+  summary.innerHTML = `Skills${skillSummaryText ? ` <span class="item-pool-rune-summary">${escapeHtml(skillSummaryText)}</span>` : ""}`;
+}
+
+function updateEnemyLevelSkillSummaries() {
+  enemyPoolList.querySelectorAll(".enemy-level-row").forEach((levelRow) => {
+    updateEnemyLevelSkillSummary(levelRow);
+  });
+}
+
 function normalizeEnemyFamilyRule(rule, fallback = {}) {
   const familyId = rule?.familyId ?? fallback.familyId ?? makeId("enemy");
   return {
@@ -17389,10 +17406,17 @@ enemyPoolList.addEventListener("change", (event) => {
   if (familyToggle) {
     setEnemyFamilyEnabled(familyToggle.closest(".enemy-family"), familyToggle.checked);
   }
-  if (event.target.closest('[data-target="skillType"]')) {
-    renderEnemyPoolControls(readEnemyPoolRules());
+  const changedSkillType = event.target.closest('[data-target="skillType"]');
+  if (changedSkillType) {
+    const skillRow = changedSkillType.closest(".enemy-skill-row");
+    if (skillRow) {
+      const replacement = document.createElement("div");
+      replacement.innerHTML = renderEnemySkillRow(readEnemySkillFromRow(skillRow));
+      skillRow.replaceWith(replacement.firstElementChild);
+    }
   }
   refreshEnemySkillSummaries();
+  updateEnemyLevelSkillSummaries();
   updateEnemyFamilySummaries();
   updateEnemyFamilyToggles();
   updateEnemyPursuitControls();
@@ -17415,6 +17439,7 @@ enemyPoolList.addEventListener("change", (event) => {
 
 enemyPoolList.addEventListener("input", (event) => {
   refreshEnemySkillSummaries();
+  updateEnemyLevelSkillSummaries();
   updateEnemyFamilySummaries();
   const affectsFamilyReferences = Boolean(event.target.closest('[data-target="familyName"]'));
   if (affectsFamilyReferences) {
@@ -17471,44 +17496,44 @@ environmentalEffectsList.addEventListener("change", () => {
 enemyPoolList.addEventListener("click", (event) => {
   const addSkillButton = event.target.closest('[data-action="add_enemy_skill"]');
   if (addSkillButton) {
-    const rules = readEnemyPoolRules();
-    const familyId = addSkillButton.closest(".enemy-level-row")?.dataset.family;
-    const levelNumber = Number(addSkillButton.closest(".enemy-level-row")?.dataset.level);
-    const family = rules.find((entry) => entry.familyId === familyId);
-    const level = family?.levels?.find((entry) => entry.level === levelNumber);
-    if (level) {
-      level.skills = [normalizeEnemySkill({ type: enemySkillDefinitions[0].id }, {}), ...normalizeEnemySkills(level.skills)];
-      renderEnemyPoolControls(rules);
+    const levelRow = addSkillButton.closest(".enemy-level-row");
+    const skillList = levelRow?.querySelector(".enemy-skill-list");
+    if (levelRow && skillList) {
+      skillList.querySelector(".item-pool-tip")?.remove();
+      const wrapper = document.createElement("div");
+      wrapper.innerHTML = renderEnemySkillRow(normalizeEnemySkill({ type: enemySkillDefinitions[0].id }, {}));
+      skillList.prepend(wrapper.firstElementChild);
+      const skillDetails = levelRow.querySelector(".enemy-level-skills");
+      if (skillDetails) {
+        skillDetails.open = true;
+      }
     }
+    refreshEnemySkillSummaries();
+    updateEnemyLevelSkillSummaries();
     updateEnemyFamilySummaries();
     updateEnemyFamilyToggles();
     updateEnemyPursuitControls();
-    renderEnemyTypeControls(readEnemyTypeRules());
-    renderRunePoolControls(readRunePoolRules());
-    renderCustomGoalControls(readCustomGoal());
     if (game.recipe) {
       game.recipe.enemyPoolRules = readEnemyPoolRules();
-      game.recipe.enemyTypeRules = readEnemyTypeRules();
-      game.recipe.runePoolRules = readRunePoolRules();
-      game.recipe.customGoal = readCustomGoal();
       scheduleEditorRender();
     }
     return;
   }
   const removeSkillButton = event.target.closest('[data-action="remove_enemy_skill"]');
   if (removeSkillButton) {
-    removeSkillButton.closest(".enemy-skill-row")?.remove();
+    const skillRow = removeSkillButton.closest(".enemy-skill-row");
+    const levelRow = removeSkillButton.closest(".enemy-level-row");
+    const skillList = levelRow?.querySelector(".enemy-skill-list");
+    skillRow?.remove();
+    if (skillList && skillList.querySelectorAll(".enemy-skill-row").length === 0) {
+      skillList.innerHTML = '<p class="item-pool-tip">No skills yet.</p>';
+    }
+    updateEnemyLevelSkillSummary(levelRow);
     updateEnemyFamilySummaries();
     updateEnemyFamilyToggles();
     updateEnemyPursuitControls();
-    renderEnemyTypeControls(readEnemyTypeRules());
-    renderRunePoolControls(readRunePoolRules());
-    renderCustomGoalControls(readCustomGoal());
     if (game.recipe) {
       game.recipe.enemyPoolRules = readEnemyPoolRules();
-      game.recipe.enemyTypeRules = readEnemyTypeRules();
-      game.recipe.runePoolRules = readRunePoolRules();
-      game.recipe.customGoal = readCustomGoal();
       scheduleEditorRender();
     }
     return;
