@@ -1144,6 +1144,9 @@ function normalizeEnvironmentStageRules(rules = undefined, floors = 99, recipe =
   const customEnvironmentLibrary = normalizeCustomEnvironmentLibrary(recipe?.customEnvironmentLibrary, recipe?.customEnvironment);
   const environmentKeys = getEnvironmentSelectOptions({ customEnvironmentLibrary }).map((option) => option.value);
   const incoming = Array.isArray(rules) ? rules : [];
+  if (rules !== undefined && incoming.length === 0) {
+    return [];
+  }
   const fallbackBaseKey = getLegacyBaseEnvironmentKey(recipe, customEnvironmentLibrary);
   const normalized = incoming
     .map((rule) => normalizeEnvironmentStageRule(rule, {}, {
@@ -1298,8 +1301,12 @@ function readEnvironmentStageRules() {
   if (!environmentStageList) {
     return [];
   }
+  const rows = Array.from(environmentStageList.querySelectorAll(".environment-stage-row"));
+  if (rows.length === 0) {
+    return [];
+  }
   return normalizeEnvironmentStageRules(
-    Array.from(environmentStageList.querySelectorAll(".environment-stage-row")).map((row) => ({
+    rows.map((row) => ({
       id: row.dataset.stageId,
       startFloor: row.querySelector('[data-target="startFloor"]')?.value,
       environmentKey: row.querySelector('[data-target="environmentKey"]')?.value,
@@ -1359,12 +1366,12 @@ function applyEnvironmentStageRules(rules = undefined, recipe = null) {
 
 function addEnvironmentStageRule() {
   const floors = numberValue("floors");
-  if (floors <= 1) {
+  const rules = readEnvironmentStageRules();
+  if (floors <= 1 && rules.length > 0) {
     return;
   }
-  const rules = readEnvironmentStageRules();
   const usedFloors = new Set(rules.map((rule) => rule.startFloor));
-  let startFloor = 2;
+  let startFloor = rules.length === 0 ? 1 : 2;
   while (usedFloors.has(startFloor) && startFloor < floors) {
     startFloor += 1;
   }
@@ -1411,7 +1418,7 @@ function getBoardEnvironmentId(environmentKey = "ruins") {
 }
 
 function normalizeRecipeData(recipe = {}) {
-  const normalizedName = String(recipe?.name ?? "Unnamed Dungeon").trim() || "Unnamed Dungeon";
+  const normalizedName = String(recipe?.name ?? "").trim().slice(0, 32);
   const customEnvironmentLibrary = normalizeCustomEnvironmentLibrary(recipe?.customEnvironmentLibrary, recipe?.customEnvironment);
   return {
     name: normalizedName,
@@ -1439,12 +1446,12 @@ function normalizeRecipeData(recipe = {}) {
     unidentifiedItemsEnabled: recipe?.unidentifiedItemsEnabled === true,
     deductionMode: recipe?.deductionMode === true,
     weaponRarityEnabled: recipe?.weaponRarityEnabled !== false,
-    rarityRules: normalizeRarityRules(recipe?.rarityRules),
+    rarityRules: normalizeRarityRules(recipe?.rarityRules ?? []),
     equippedCountsTowardLimit: recipe?.equippedCountsTowardLimit === true,
     hideGridlines: recipe?.hideGridlines === true,
     cameraMode: recipe?.cameraMode === "screen" ? "screen" : "center",
     environment: ["ruins", "fungal", "ember", "frost", "cosmic", "beach", "ghastly", "shadow", "underwater", "swamp", "depths", "blood", "custom"].includes(recipe?.environment) ? recipe.environment : "ruins",
-    environmentStages: normalizeEnvironmentStageRules(recipe?.environmentStages, recipe?.floors ?? 8, {
+    environmentStages: normalizeEnvironmentStageRules(recipe?.environmentStages ?? [], recipe?.floors ?? 8, {
       ...recipe,
       customEnvironmentLibrary,
     }),
@@ -1456,22 +1463,22 @@ function normalizeRecipeData(recipe = {}) {
     runLogSettings: normalizeRunLogSettings(recipe?.runLogSettings),
     environmentalEffects: normalizeEnvironmentalEffects(recipe?.environmentalEffects),
     specialRooms: normalizeSpecialRooms(recipe?.specialRooms),
-    itemPoolRules: normalizeItemPoolRules(recipe?.itemPoolRules),
-    runePoolRules: normalizeRunePoolRules(recipe?.runePoolRules),
-    specialAttackRules: normalizeSpecialAttackRules(recipe?.specialAttackRules),
+    itemPoolRules: normalizeItemPoolRules(recipe?.itemPoolRules ?? []),
+    runePoolRules: normalizeRunePoolRules(recipe?.runePoolRules ?? []),
+    specialAttackRules: normalizeSpecialAttackRules(recipe?.specialAttackRules ?? []),
     trapsVisible: recipe?.trapsVisible === true,
     sigilsVisible: recipe?.sigilsVisible === true,
-    trapPoolRules: normalizeTrapPoolRules(recipe?.trapPoolRules),
-    sigilPoolRules: normalizeSigilPoolRules(recipe?.sigilPoolRules),
-    enemyPoolRules: normalizeEnemyPoolRules(recipe?.enemyPoolRules),
-    enemyTypeRules: normalizeEnemyTypeRules(recipe?.enemyTypeRules),
+    trapPoolRules: normalizeTrapPoolRules(recipe?.trapPoolRules ?? []),
+    sigilPoolRules: normalizeSigilPoolRules(recipe?.sigilPoolRules ?? []),
+    enemyPoolRules: normalizeEnemyPoolRules(recipe?.enemyPoolRules ?? []),
+    enemyTypeRules: normalizeEnemyTypeRules(recipe?.enemyTypeRules ?? []),
     enemyDrops: normalizeEnemyDropSettings(recipe?.enemyDrops),
-    bossRoom: normalizeBossRoomSettings(recipe?.bossRoom),
+    bossRoom: normalizeBossRoomSettings(recipe?.bossRoom ?? { bossRoom: { enabled: false, name: "", specialAttacks: [] } }),
     soundPackMode: normalizeSoundPackMode(recipe?.soundPackMode),
     soundEffectRules: normalizeSoundEffectRules(recipe?.soundEffectRules),
     startingEquipment: normalizeStartingEquipment(recipe),
     startingInventory: normalizeStartingInventory(recipe),
-    seed: Number(recipe?.seed) || hashString(`${normalizedName}-recipe`),
+    seed: Number(recipe?.seed) || hashString(`${normalizedName || "empty"}-recipe`),
   };
 }
 
@@ -1591,8 +1598,11 @@ function normalizeLegacyRarityRules(rules = {}) {
   return [uncommon, rare, ...customRules];
 }
 
-function normalizeRarityRules(rules = []) {
+function normalizeRarityRules(rules = undefined) {
   const incoming = Array.isArray(rules) ? rules : normalizeLegacyRarityRules(rules);
+  if (rules !== undefined && incoming.length === 0) {
+    return [];
+  }
   const normalized = [];
   const seen = new Set();
 
@@ -5626,9 +5636,12 @@ function normalizeBossRoomSettings(settings = {}) {
   const shape = String(bossRoom.shape ?? "square").toLowerCase();
   const normalizedShape = bossRoomShapeOptions.includes(shape) ? shape : "square";
   const normalizedBossSize = bossRoom.bossSize === "3x3" ? "3x3" : "2x2";
+  const normalizedName = typeof bossRoom.name === "string"
+    ? bossRoom.name.trim().slice(0, 40)
+    : String(bossRoom.name ?? "Dungeon Boss").trim().slice(0, 40);
   return {
     enabled: bossRoom.enabled === true,
-    name: String(bossRoom.name ?? "Dungeon Boss").trim().slice(0, 40) || "Dungeon Boss",
+    name: normalizedName || (bossRoom.enabled === true ? "Dungeon Boss" : ""),
     bossSize: normalizedBossSize,
     attack: Math.max(0, Math.round(Number(bossRoom.attack ?? 12) || 12)),
     shape: normalizedShape,
@@ -18553,7 +18566,21 @@ updateHungerControls();
 updateUnidentifiedControls();
 refreshRarityEditorState();
 setRecipeCollapsed(false);
-randomizeRecipe();
+applyRecipe({
+  name: "",
+  description: "",
+  itemPoolRules: [],
+  runePoolRules: [],
+  specialAttackRules: [],
+  trapPoolRules: [],
+  sigilPoolRules: [],
+  enemyPoolRules: [],
+  enemyTypeRules: [],
+  rarityRules: [],
+  environmentStages: [],
+  bossRoom: { enabled: false, name: "", specialAttacks: [] },
+  customEnvironmentLibrary: [],
+});
 renderPublishedDungeons();
 void ensurePublishedDungeonsLoaded();
 startRun();
