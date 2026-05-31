@@ -2266,12 +2266,13 @@ const itemEffectDefinitions = [
   { id: "attackBuff", label: "Attack Buff", kinds: ["food", "scroll", "string", "utility"], valueLabel: "Atk+", min: -99, step: 1, extraLabel: "Turns", extraMin: 0, extraStep: 1, defaultExtra: 12 },
   { id: "defenseBuff", label: "Defense Buff", kinds: ["food", "scroll", "string", "utility"], valueLabel: "Def+", min: -99, step: 1, extraLabel: "Turns", extraMin: 0, extraStep: 1, defaultExtra: 12 },
   { id: "hungerFill", label: "Restore Hunger", kinds: ["food", "scroll", "string", "utility"], valueLabel: "Hunger", min: 0, step: 1 },
+  { id: "foodMaxHungerUp", label: "Increase Max Hunger", kinds: ["food"], valueLabel: "Max Hunger+", min: 1, step: 1 },
   { id: "foodMaxHungerAtFull", label: "When Full Hunger, Increase Max Hunger", kinds: ["food"], valueLabel: "Max Hunger+", min: 1, step: 1 },
   { id: "foodRestoreAllHunger", label: "Restore All Hunger", kinds: ["food"], valueLabel: "On", min: 1, step: 1, booleanValue: true },
   { id: "foodSelfDamage", label: "Take Damage", kinds: ["food"], valueLabel: "Damage", min: 1, step: 1 },
   { id: "foodFartWarp", label: "Teleport Room Enemies Due To Farts", kinds: ["food"], valueLabel: "On", min: 1, step: 1, booleanValue: true },
   { id: "maxHpBonus", label: "Max HP", kinds: ["bracelet", "food", "scroll", "string", "utility"], valueLabel: "Amount", min: -99, step: 1 },
-  { id: "maxHungerBonus", label: "Max Hunger", kinds: ["bracelet", "food", "scroll", "string", "utility"], valueLabel: "Amount", min: -99, step: 1 },
+  { id: "maxHungerBonus", label: "Max Hunger", kinds: ["bracelet", "scroll", "string", "utility"], valueLabel: "Amount", min: -99, step: 1 },
   { id: "goldGain", label: "Gain Gold", kinds: ["food", "scroll", "string", "utility"], valueLabel: "Gold", min: -9999, step: 1 },
   { id: "negateTraps", label: "Negate Traps", kinds: ["bracelet", "food", "scroll", "string", "utility"], valueLabel: "On", min: 1, step: 1, booleanValue: true, extraLabel: "Turns", extraMin: 0, extraStep: 1, defaultExtra: 12 },
   { id: "grassHeal", label: "Heal HP", kinds: ["grass"], valueLabel: "HP", min: 0, step: 1 },
@@ -2363,6 +2364,8 @@ function getItemEffectTooltip(effectType = "heal") {
       return "Temporarily raises defense for the chosen number of turns.";
     case "hungerFill":
       return "Restores hunger immediately.";
+    case "foodMaxHungerUp":
+      return "Raises max hunger by the chosen amount when the food is eaten.";
     case "foodMaxHungerAtFull":
       return "If hunger is currently full, raises max hunger by the chosen amount.";
     case "foodRestoreAllHunger":
@@ -2440,6 +2443,10 @@ function normalizeItemEffect(effect = {}, kind = "grass") {
       defenseBuff: "grassDefenseBuff",
       maxHungerBonus: Number(effect?.value ?? 0) < 0 ? "grassMaxHungerDown" : "grassMaxHungerUp",
     }[effect?.type] ?? effect?.type)
+    : kind === "food"
+      ? ({
+        maxHungerBonus: Number(effect?.value ?? 0) < 0 ? "maxHungerBonus" : "foodMaxHungerUp",
+      }[effect?.type] ?? effect?.type)
     : effect?.type;
   const definition = allowed.find((entry) => entry.id === normalizedType) ?? fallback;
   return {
@@ -11921,6 +11928,8 @@ function describeItem(item) {
       parts.push(`Level +${effect.value}`);
     } else if (effect.type === "grassLevelDown") {
       parts.push(`Level -${effect.value}`);
+    } else if (effect.type === "foodMaxHungerUp") {
+      parts.push(`Max hunger +${effect.value}`);
     } else if (effect.type === "foodMaxHungerAtFull") {
       parts.push(`At full hunger, max hunger +${effect.value}`);
     } else if (effect.type === "foodRestoreAllHunger") {
@@ -13473,6 +13482,21 @@ function applyConsumableEffects(entry, item, options = {}) {
         } else {
           log(`${sourceName} fizzles because hunger is not full.`);
         }
+      } else {
+        log(`${sourceName} fizzles because hunger is disabled in this recipe.`);
+      }
+      return;
+    }
+
+    if (effect.type === "foodMaxHungerUp" && amount > 0) {
+      if (game.recipe?.hungerEnabled === true) {
+        const previousMax = getPlayerMaxHunger();
+        game.permanentBonuses.maxHunger += amount;
+        const nextMax = getPlayerMaxHunger();
+        game.hungerMax = nextMax;
+        game.hunger = Math.min(nextMax, game.hunger + Math.max(0, nextMax - previousMax));
+        log(`${sourceName} raises max hunger by ${amount}.`);
+        appliedAny = true;
       } else {
         log(`${sourceName} fizzles because hunger is disabled in this recipe.`);
       }
