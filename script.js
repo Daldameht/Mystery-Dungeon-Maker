@@ -616,6 +616,7 @@ const game = {
   lastRunSummary: null,
   goalSatisfied: false,
   passiveHealBlockedThisTurn: false,
+  reviveCharges: 0,
   identifiedItemIds: new Set(),
   usedUnknownItemNames: new Set(),
   pendingUpgradeChoice: null,
@@ -2261,14 +2262,31 @@ function getScrollAmountLabel(scrollEffect = "uncurse") {
 }
 
 const itemEffectDefinitions = [
-  { id: "heal", label: "Heal HP", kinds: ["grass", "food", "scroll", "string", "utility"], valueLabel: "HP", min: 0, step: 1 },
-  { id: "attackBuff", label: "Attack Buff", kinds: ["grass", "food", "scroll", "string", "utility"], valueLabel: "Atk+", min: -99, step: 1, extraLabel: "Turns", extraMin: 0, extraStep: 1, defaultExtra: 12 },
-  { id: "defenseBuff", label: "Defense Buff", kinds: ["grass", "food", "scroll", "string", "utility"], valueLabel: "Def+", min: -99, step: 1, extraLabel: "Turns", extraMin: 0, extraStep: 1, defaultExtra: 12 },
-  { id: "hungerFill", label: "Restore Hunger", kinds: ["grass", "food", "scroll", "string", "utility"], valueLabel: "Hunger", min: 0, step: 1 },
-  { id: "maxHpBonus", label: "Max HP", kinds: ["bracelet", "grass", "food", "scroll", "string", "utility"], valueLabel: "Amount", min: -99, step: 1 },
-  { id: "maxHungerBonus", label: "Max Hunger", kinds: ["bracelet", "grass", "food", "scroll", "string", "utility"], valueLabel: "Amount", min: -99, step: 1 },
-  { id: "goldGain", label: "Gain Gold", kinds: ["grass", "food", "scroll", "string", "utility"], valueLabel: "Gold", min: -9999, step: 1 },
-  { id: "negateTraps", label: "Negate Traps", kinds: ["bracelet", "grass", "food", "scroll", "string", "utility"], valueLabel: "On", min: 1, step: 1, booleanValue: true, extraLabel: "Turns", extraMin: 0, extraStep: 1, defaultExtra: 12 },
+  { id: "heal", label: "Heal HP", kinds: ["food", "scroll", "string", "utility"], valueLabel: "HP", min: 0, step: 1 },
+  { id: "attackBuff", label: "Attack Buff", kinds: ["food", "scroll", "string", "utility"], valueLabel: "Atk+", min: -99, step: 1, extraLabel: "Turns", extraMin: 0, extraStep: 1, defaultExtra: 12 },
+  { id: "defenseBuff", label: "Defense Buff", kinds: ["food", "scroll", "string", "utility"], valueLabel: "Def+", min: -99, step: 1, extraLabel: "Turns", extraMin: 0, extraStep: 1, defaultExtra: 12 },
+  { id: "hungerFill", label: "Restore Hunger", kinds: ["food", "scroll", "string", "utility"], valueLabel: "Hunger", min: 0, step: 1 },
+  { id: "maxHpBonus", label: "Max HP", kinds: ["bracelet", "food", "scroll", "string", "utility"], valueLabel: "Amount", min: -99, step: 1 },
+  { id: "maxHungerBonus", label: "Max Hunger", kinds: ["bracelet", "food", "scroll", "string", "utility"], valueLabel: "Amount", min: -99, step: 1 },
+  { id: "goldGain", label: "Gain Gold", kinds: ["food", "scroll", "string", "utility"], valueLabel: "Gold", min: -9999, step: 1 },
+  { id: "negateTraps", label: "Negate Traps", kinds: ["bracelet", "food", "scroll", "string", "utility"], valueLabel: "On", min: 1, step: 1, booleanValue: true, extraLabel: "Turns", extraMin: 0, extraStep: 1, defaultExtra: 12 },
+  { id: "grassHeal", label: "Heal HP", kinds: ["grass"], valueLabel: "HP", min: 0, step: 1 },
+  { id: "grassMaxHpAtFull", label: "When HP Is Full, Increase Max HP", kinds: ["grass"], valueLabel: "Max HP+", min: 1, step: 1 },
+  { id: "grassRevive", label: "Revive Player After Death", kinds: ["grass"], valueLabel: "On", min: 1, step: 1, booleanValue: true },
+  { id: "grassMaxHungerUp", label: "Increase Max Hunger", kinds: ["grass"], valueLabel: "Max Hunger+", min: 1, step: 1 },
+  { id: "grassMaxHungerDown", label: "Decrease Max Hunger", kinds: ["grass"], valueLabel: "Max Hunger-", min: 1, step: 1 },
+  { id: "grassFireBreath", label: "Breath Fire", kinds: ["grass"], valueLabel: "Damage", min: 1, step: 1 },
+  { id: "grassLeap", label: "Leap Somewhere On The Floor", kinds: ["grass"], valueLabel: "On", min: 1, step: 1, booleanValue: true },
+  { id: "grassStrengthUp", label: "Increase Strength", kinds: ["grass"], valueLabel: "Atk+", min: 1, step: 1 },
+  { id: "grassStrengthDown", label: "Decrease Strength", kinds: ["grass"], valueLabel: "Atk-", min: 1, step: 1 },
+  { id: "grassSelfDamage", label: "Deal Damage To Player", kinds: ["grass"], valueLabel: "Damage", min: 1, step: 1 },
+  { id: "grassTrapSight", label: "Allows Player To See Traps", kinds: ["grass"], valueLabel: "On", min: 1, step: 1, booleanValue: true },
+  { id: "grassActionSpeed", label: "Increase Action Speed", kinds: ["grass"], valueLabel: "Turns", min: 1, step: 1 },
+  { id: "grassAttackBuff", label: "Temporarily Increase Attack Power", kinds: ["grass"], valueLabel: "Turns", min: 1, step: 1 },
+  { id: "grassDefenseBuff", label: "Temporarily Increase Defense Power", kinds: ["grass"], valueLabel: "Turns", min: 1, step: 1 },
+  { id: "grassInvincible", label: "Grant Invincibility", kinds: ["grass"], valueLabel: "Turns", min: 1, step: 1 },
+  { id: "grassLevelUp", label: "Increase Level", kinds: ["grass"], valueLabel: "Levels", min: 1, step: 1 },
+  { id: "grassLevelDown", label: "Decrease Level", kinds: ["grass"], valueLabel: "Levels", min: 1, step: 1 },
   { id: "shopDiscount", label: "Haggling", kinds: ["bracelet"], valueLabel: "% Off", min: 1, step: 1 },
   { id: "trapmore", label: "Trapmore", kinds: ["bracelet"], valueLabel: "Turns", min: 1, step: 1 },
   { id: "monstercall", label: "Monstercall", kinds: ["bracelet"], valueLabel: "Respawn %", min: 1, step: 1 },
@@ -2301,6 +2319,40 @@ function getItemEffectTooltip(effectType = "heal") {
   switch (effectType) {
     case "heal":
       return "Restores HP when the item is used.";
+    case "grassHeal":
+      return "Restores the chosen amount of HP when the grass is used.";
+    case "grassMaxHpAtFull":
+      return "If HP is currently full, raises max HP by the chosen amount.";
+    case "grassRevive":
+      return "Grants a one-time revive that triggers after a collapse.";
+    case "grassMaxHungerUp":
+      return "Raises max hunger by the chosen amount.";
+    case "grassMaxHungerDown":
+      return "Lowers max hunger by the chosen amount.";
+    case "grassFireBreath":
+      return "Blasts nearby enemies with fire for the chosen damage.";
+    case "grassLeap":
+      return "Warps the player somewhere else on the floor.";
+    case "grassStrengthUp":
+      return "Raises the player's current strength by the chosen amount.";
+    case "grassStrengthDown":
+      return "Lowers the player's current strength by the chosen amount.";
+    case "grassSelfDamage":
+      return "Deals the chosen amount of damage to the player.";
+    case "grassTrapSight":
+      return "Reveals traps and lets the player keep seeing them for a while.";
+    case "grassActionSpeed":
+      return "Grants haste for the chosen number of turns, skipping enemy actions.";
+    case "grassAttackBuff":
+      return "Raises attack by 3 for the chosen number of turns.";
+    case "grassDefenseBuff":
+      return "Raises defense by 3 for the chosen number of turns.";
+    case "grassInvincible":
+      return "Prevents damage for the chosen number of turns.";
+    case "grassLevelUp":
+      return "Raises the player's level by the chosen amount if leveling is enabled.";
+    case "grassLevelDown":
+      return "Lowers the player's level by the chosen amount if leveling is enabled.";
     case "attackBuff":
       return "Temporarily raises attack for the chosen number of turns.";
     case "defenseBuff":
@@ -2369,7 +2421,15 @@ function makeDefaultItemEffect(kind = "grass") {
 function normalizeItemEffect(effect = {}, kind = "grass") {
   const allowed = getAllowedItemEffectDefinitions(kind);
   const fallback = allowed[0] ?? itemEffectDefinitions[0];
-  const definition = allowed.find((entry) => entry.id === effect?.type) ?? fallback;
+  const normalizedType = kind === "grass"
+    ? ({
+      heal: "grassHeal",
+      attackBuff: "grassAttackBuff",
+      defenseBuff: "grassDefenseBuff",
+      maxHungerBonus: Number(effect?.value ?? 0) < 0 ? "grassMaxHungerDown" : "grassMaxHungerUp",
+    }[effect?.type] ?? effect?.type)
+    : effect?.type;
+  const definition = allowed.find((entry) => entry.id === normalizedType) ?? fallback;
   return {
     enabled: effect?.enabled !== false,
     type: definition.id,
@@ -2386,29 +2446,49 @@ function normalizeItemEffect(effect = {}, kind = "grass") {
 
 function legacyItemEffectsFromRule(rule = {}) {
   const effects = [];
-  if (rule.heal) {
-    effects.push({ enabled: true, type: "heal", value: Number(rule.heal), extra: 0 });
-  }
-  if (rule.attackBuff) {
-    effects.push({ enabled: true, type: "attackBuff", value: Number(rule.attackBuff), extra: Number(rule.duration ?? 12) });
-  }
-  if (rule.defenseBuff) {
-    effects.push({ enabled: true, type: "defenseBuff", value: Number(rule.defenseBuff), extra: Number(rule.duration ?? 12) });
-  }
-  if (rule.hungerFill) {
-    effects.push({ enabled: true, type: "hungerFill", value: Number(rule.hungerFill), extra: 0 });
-  }
-  if (rule.maxHpBonus) {
-    effects.push({ enabled: true, type: "maxHpBonus", value: Number(rule.maxHpBonus), extra: 0 });
-  }
-  if (rule.maxHungerBonus) {
-    effects.push({ enabled: true, type: "maxHungerBonus", value: Number(rule.maxHungerBonus), extra: 0 });
-  }
-  if (rule.gold) {
-    effects.push({ enabled: true, type: "goldGain", value: Number(rule.gold), extra: 0 });
-  }
-  if (rule.negateTraps) {
-    effects.push({ enabled: true, type: "negateTraps", value: 1, extra: 0 });
+  if (rule.kind === "grass") {
+    if (rule.heal) {
+      effects.push({ enabled: true, type: "grassHeal", value: Number(rule.heal), extra: 0 });
+    }
+    if (rule.attackBuff) {
+      effects.push({ enabled: true, type: "grassAttackBuff", value: Number(rule.duration ?? 12), extra: 0 });
+    }
+    if (rule.defenseBuff) {
+      effects.push({ enabled: true, type: "grassDefenseBuff", value: Number(rule.duration ?? 12), extra: 0 });
+    }
+    if (rule.maxHungerBonus) {
+      effects.push({
+        enabled: true,
+        type: Number(rule.maxHungerBonus) < 0 ? "grassMaxHungerDown" : "grassMaxHungerUp",
+        value: Math.abs(Number(rule.maxHungerBonus)),
+        extra: 0,
+      });
+    }
+  } else {
+    if (rule.heal) {
+      effects.push({ enabled: true, type: "heal", value: Number(rule.heal), extra: 0 });
+    }
+    if (rule.attackBuff) {
+      effects.push({ enabled: true, type: "attackBuff", value: Number(rule.attackBuff), extra: Number(rule.duration ?? 12) });
+    }
+    if (rule.defenseBuff) {
+      effects.push({ enabled: true, type: "defenseBuff", value: Number(rule.defenseBuff), extra: Number(rule.duration ?? 12) });
+    }
+    if (rule.hungerFill) {
+      effects.push({ enabled: true, type: "hungerFill", value: Number(rule.hungerFill), extra: 0 });
+    }
+    if (rule.maxHpBonus) {
+      effects.push({ enabled: true, type: "maxHpBonus", value: Number(rule.maxHpBonus), extra: 0 });
+    }
+    if (rule.maxHungerBonus) {
+      effects.push({ enabled: true, type: "maxHungerBonus", value: Number(rule.maxHungerBonus), extra: 0 });
+    }
+    if (rule.gold) {
+      effects.push({ enabled: true, type: "goldGain", value: Number(rule.gold), extra: 0 });
+    }
+    if (rule.negateTraps) {
+      effects.push({ enabled: true, type: "negateTraps", value: 1, extra: 0 });
+    }
   }
   if (rule.scrollEffect) {
     effects.push({ enabled: true, type: rule.scrollEffect, value: Number(rule.scrollAmount ?? getDefaultScrollAmount(rule.scrollEffect)), extra: 0 });
@@ -2427,17 +2507,41 @@ function getItemRuleEffects(rule = {}) {
 function applyLegacyItemFieldsFromEffects(rule = {}) {
   const effects = getItemRuleEffects(rule);
   const firstScroll = effects.find((effect) => ["uncurse", "upgradeSword", "downgradeSword", "upgradeShield", "downgradeShield", "clearTraps"].includes(effect.type));
-  rule.heal = effects.filter((effect) => effect.type === "heal" && effect.enabled).reduce((sum, effect) => sum + Number(effect.value || 0), 0);
-  rule.attackBuff = effects.filter((effect) => effect.type === "attackBuff" && effect.enabled).reduce((sum, effect) => sum + Number(effect.value || 0), 0);
-  rule.defenseBuff = effects.filter((effect) => effect.type === "defenseBuff" && effect.enabled).reduce((sum, effect) => sum + Number(effect.value || 0), 0);
-  rule.duration = effects
-    .filter((effect) => ["attackBuff", "defenseBuff"].includes(effect.type) && effect.enabled)
-    .reduce((max, effect) => Math.max(max, Number(effect.extra || 0)), 0);
-  rule.hungerFill = effects.filter((effect) => effect.type === "hungerFill" && effect.enabled).reduce((sum, effect) => sum + Number(effect.value || 0), 0);
-  rule.maxHpBonus = effects.filter((effect) => effect.type === "maxHpBonus" && effect.enabled).reduce((sum, effect) => sum + Number(effect.value || 0), 0);
-  rule.maxHungerBonus = effects.filter((effect) => effect.type === "maxHungerBonus" && effect.enabled).reduce((sum, effect) => sum + Number(effect.value || 0), 0);
-  rule.gold = effects.filter((effect) => effect.type === "goldGain" && effect.enabled).reduce((sum, effect) => sum + Number(effect.value || 0), 0);
-  rule.negateTraps = effects.some((effect) => effect.type === "negateTraps" && effect.enabled);
+  if (rule.kind === "grass") {
+    rule.heal = effects.filter((effect) => effect.type === "grassHeal" && effect.enabled).reduce((sum, effect) => sum + Number(effect.value || 0), 0);
+    rule.attackBuff = effects.some((effect) => effect.type === "grassAttackBuff" && effect.enabled) ? 3 : 0;
+    rule.defenseBuff = effects.some((effect) => effect.type === "grassDefenseBuff" && effect.enabled) ? 3 : 0;
+    rule.duration = effects
+      .filter((effect) => ["grassAttackBuff", "grassDefenseBuff"].includes(effect.type) && effect.enabled)
+      .reduce((max, effect) => Math.max(max, Number(effect.value || 0)), 0);
+    rule.hungerFill = 0;
+    rule.maxHpBonus = 0;
+    rule.maxHungerBonus = effects
+      .filter((effect) => effect.enabled)
+      .reduce((sum, effect) => {
+        if (effect.type === "grassMaxHungerUp") {
+          return sum + Number(effect.value || 0);
+        }
+        if (effect.type === "grassMaxHungerDown") {
+          return sum - Number(effect.value || 0);
+        }
+        return sum;
+      }, 0);
+    rule.gold = 0;
+    rule.negateTraps = false;
+  } else {
+    rule.heal = effects.filter((effect) => effect.type === "heal" && effect.enabled).reduce((sum, effect) => sum + Number(effect.value || 0), 0);
+    rule.attackBuff = effects.filter((effect) => effect.type === "attackBuff" && effect.enabled).reduce((sum, effect) => sum + Number(effect.value || 0), 0);
+    rule.defenseBuff = effects.filter((effect) => effect.type === "defenseBuff" && effect.enabled).reduce((sum, effect) => sum + Number(effect.value || 0), 0);
+    rule.duration = effects
+      .filter((effect) => ["attackBuff", "defenseBuff"].includes(effect.type) && effect.enabled)
+      .reduce((max, effect) => Math.max(max, Number(effect.extra || 0)), 0);
+    rule.hungerFill = effects.filter((effect) => effect.type === "hungerFill" && effect.enabled).reduce((sum, effect) => sum + Number(effect.value || 0), 0);
+    rule.maxHpBonus = effects.filter((effect) => effect.type === "maxHpBonus" && effect.enabled).reduce((sum, effect) => sum + Number(effect.value || 0), 0);
+    rule.maxHungerBonus = effects.filter((effect) => effect.type === "maxHungerBonus" && effect.enabled).reduce((sum, effect) => sum + Number(effect.value || 0), 0);
+    rule.gold = effects.filter((effect) => effect.type === "goldGain" && effect.enabled).reduce((sum, effect) => sum + Number(effect.value || 0), 0);
+    rule.negateTraps = effects.some((effect) => effect.type === "negateTraps" && effect.enabled);
+  }
   rule.scrollEffect = firstScroll?.type;
   rule.scrollAmount = firstScroll ? Math.max(1, Number(firstScroll.value || 1)) : undefined;
   rule.effects = effects;
@@ -5763,6 +5867,72 @@ function awardXp(amount, sourceName = "monster") {
     log(`Level up! You reached level ${game.level}${changes.length > 0 ? `: ${changes.join(", ")}.` : "."}`);
   }
   checkCustomGoalCompletion();
+}
+
+function reverseLevelUpStatChanges(recipe = game.recipe) {
+  const growth = getLevelingGrowth(recipe);
+  if (growth.hp.enabled) {
+    const amount = Number(growth.hp.value) || 0;
+    game.levelBonuses.hp -= amount;
+  }
+  if (growth.attack.enabled) {
+    const amount = Number(growth.attack.value) || 0;
+    game.levelBonuses.attack -= amount;
+  }
+  if (growth.defense.enabled) {
+    const amount = Number(growth.defense.value) || 0;
+    game.levelBonuses.defense -= amount;
+  }
+  if (growth.accuracy.enabled) {
+    const amount = Number(growth.accuracy.value) || 0;
+    game.levelBonuses.accuracy -= amount;
+  }
+  if (growth.hunger.enabled && game.recipe?.hungerEnabled === true) {
+    const amount = Number(growth.hunger.value) || 0;
+    game.levelBonuses.hunger -= amount;
+    game.hungerMax = Math.max(1, getPlayerMaxHunger());
+    game.hunger = Math.min(game.hunger, game.hungerMax);
+  }
+  if (growth.gold.enabled) {
+    const amount = Number(growth.gold.value) || 0;
+    game.gold -= amount;
+  }
+  game.hp = Math.min(game.hp, getPlayerMaxHp());
+}
+
+function clampXpToCurrentLevel(recipe = game.recipe) {
+  const currentLevelFloorXp = getXpNeededForLevel(game.level, recipe);
+  const nextLevelXp = getNextLevelXp(game.level, recipe);
+  game.xp = Math.max(currentLevelFloorXp, game.xp);
+  if (nextLevelXp !== null) {
+    game.xp = Math.min(game.xp, Math.max(currentLevelFloorXp, nextLevelXp - 1));
+  }
+}
+
+function adjustPlayerLevel(delta, sourceName = "effect", recipe = game.recipe) {
+  if (!levelingEnabled()) {
+    log(`${sourceName} fizzles because leveling is disabled.`);
+    return 0;
+  }
+  let changed = 0;
+  if (delta > 0) {
+    while (changed < delta && game.level < 99) {
+      game.level += 1;
+      trackRunStat("levelsGained");
+      const changes = applyLevelUpStatChanges(recipe);
+      log(`${sourceName} raises you to level ${game.level}${changes.length > 0 ? `: ${changes.join(", ")}.` : "."}`);
+      changed += 1;
+    }
+  } else if (delta < 0) {
+    while (changed > delta && game.level > 1) {
+      reverseLevelUpStatChanges(recipe);
+      game.level -= 1;
+      log(`${sourceName} lowers you to level ${game.level}.`);
+      changed -= 1;
+    }
+  }
+  clampXpToCurrentLevel(recipe);
+  return changed;
 }
 
 function readStartingStats() {
@@ -9589,6 +9759,7 @@ function startRun(recipe = readRecipe(), publishedId = null) {
   game.playerWalkSteps = 0;
   game.processingTurn = false;
   game.lastRunLogDividerTurn = null;
+  game.reviveCharges = 0;
   game.inventory = normalizeStartingInventory(recipe)
     .map((entry) => createStartingItem(recipe, entry))
     .filter(Boolean);
@@ -9680,6 +9851,9 @@ function generateFloor() {
 
 function endRun(result) {
   if (game.ended && result !== "clear") {
+    return;
+  }
+  if (result === "collapse" && tryConsumeReviveCharge()) {
     return;
   }
 
@@ -9792,7 +9966,7 @@ function render() {
         tile.className = `tile ${visible ? "visible" : "explored"} exit ${borderClasses}`;
         tile.textContent = ">";
       }
-      if (visible && trap && trap.visible) {
+      if (visible && trap && (trap.visible || hasEquippedEffect("seeTraps"))) {
         const trapDesign = getTrapDesignOption(trap.design);
         tile.className = `tile visible trap ${trapDesign.className} ${borderClasses}`;
         tile.textContent = trapDesign.glyph;
@@ -11665,22 +11839,22 @@ function describeItem(item) {
   if (item.defense) {
     parts.push(`Defense +${getEffectiveStat(item, "defense")}`);
   }
-  if (item.heal) {
+  if (item.heal && item.kind !== "grass") {
     parts.push(`Heals ${item.heal} HP`);
   }
-  if (item.hungerFill) {
+  if (item.hungerFill && item.kind !== "grass") {
     parts.push(`Fills ${item.hungerFill} hunger`);
   }
-  if (item.attackBuff) {
+  if (item.attackBuff && item.kind !== "grass") {
     parts.push(`Temporary attack +${item.attackBuff}`);
   }
-  if (item.defenseBuff) {
+  if (item.defenseBuff && item.kind !== "grass") {
     parts.push(`Temporary defense +${item.defenseBuff}`);
   }
-  if (item.duration) {
+  if (item.duration && item.kind !== "grass") {
     parts.push(`${item.duration} turns`);
   }
-  if (item.gold) {
+  if (item.gold && item.kind !== "grass") {
     parts.push(`${item.gold} gold`);
   }
   const negateTrapEffect = getItemEffects(item).find((effect) => effect.enabled && effect.type === "negateTraps");
@@ -11701,7 +11875,41 @@ function describeItem(item) {
     if (!effect.enabled) {
       return;
     }
-    if (effect.type === "shopDiscount") {
+    if (effect.type === "grassHeal") {
+      parts.push(`Heals ${effect.value} HP`);
+    } else if (effect.type === "grassMaxHpAtFull") {
+      parts.push(`At full HP, max HP +${effect.value}`);
+    } else if (effect.type === "grassRevive") {
+      parts.push("Revives you after defeat");
+    } else if (effect.type === "grassMaxHungerUp") {
+      parts.push(`Max Hunger +${effect.value}`);
+    } else if (effect.type === "grassMaxHungerDown") {
+      parts.push(`Max Hunger -${effect.value}`);
+    } else if (effect.type === "grassFireBreath") {
+      parts.push(`Fire breath ${effect.value} damage`);
+    } else if (effect.type === "grassLeap") {
+      parts.push("Leaps you elsewhere on the floor");
+    } else if (effect.type === "grassStrengthUp") {
+      parts.push(`Strength +${effect.value}`);
+    } else if (effect.type === "grassStrengthDown") {
+      parts.push(`Strength -${effect.value}`);
+    } else if (effect.type === "grassSelfDamage") {
+      parts.push(`Deals ${effect.value} damage to you`);
+    } else if (effect.type === "grassTrapSight") {
+      parts.push("Lets you see traps");
+    } else if (effect.type === "grassActionSpeed") {
+      parts.push(`Haste for ${effect.value} turns`);
+    } else if (effect.type === "grassAttackBuff") {
+      parts.push(`Attack +3 for ${effect.value} turns`);
+    } else if (effect.type === "grassDefenseBuff") {
+      parts.push(`Defense +3 for ${effect.value} turns`);
+    } else if (effect.type === "grassInvincible") {
+      parts.push(`Invincible for ${effect.value} turns`);
+    } else if (effect.type === "grassLevelUp") {
+      parts.push(`Level +${effect.value}`);
+    } else if (effect.type === "grassLevelDown") {
+      parts.push(`Level -${effect.value}`);
+    } else if (effect.type === "shopDiscount") {
       parts.push(`Shop prices -${effect.value}%`);
     } else if (effect.type === "trapmore") {
       parts.push(`Spawns new traps every ${effect.value} turns`);
@@ -12375,8 +12583,11 @@ function applyFortuneBraceletTurnXp() {
 async function advanceTurn(options = {}) {
   game.processingTurn = true;
   trackRunStat("turns");
-  await moveMonsters();
-  respawnMonsters();
+  const hasteActive = hasEquippedEffect("haste");
+  if (!hasteActive) {
+    await moveMonsters();
+    respawnMonsters();
+  }
   trySpawnTrapFromBracelet();
   tickBuffs();
   if (processEnvironmentalTurn(options)) {
@@ -12914,10 +13125,244 @@ function applyConsumableEffects(entry, item, options = {}) {
   const effects = getItemEffects(entry).filter((effect) => effect?.enabled);
   let appliedAny = false;
   let pendingChoice = false;
+  const applyGrassBurstDamage = (damageAmount) => {
+    const targets = [];
+    game.monsters.forEach((monster, monsterIndex) => {
+      if (Math.max(Math.abs(monster.x - game.player.x), Math.abs(monster.y - game.player.y)) <= 1) {
+        targets.push({ kind: "monster", monster, monsterIndex });
+      }
+    });
+    if (game.boss && getDistanceToBoss(game.player.x, game.player.y, game.boss) <= 1) {
+      targets.push({ kind: "boss", boss: game.boss });
+    }
+    if (targets.length === 0) {
+      log(`${sourceName} breathes fire, but nothing is close enough to burn.`);
+      return false;
+    }
+    targets.forEach((target) => {
+      if (target.kind === "monster") {
+        const damage = applyEnvironmentalDamage(Math.max(1, damageAmount), "enemy");
+        target.monster.hp -= damage;
+        log(`${sourceName} scorches the ${target.monster.name} for ${damage} damage.`);
+      } else if (target.kind === "boss") {
+        const damage = applyEnvironmentalDamage(Math.max(1, damageAmount), "enemy");
+        target.boss.hp -= damage;
+        log(`${sourceName} scorches ${target.boss.name} for ${damage} damage.`);
+      }
+    });
+    for (let index = game.monsters.length - 1; index >= 0; index -= 1) {
+      const monster = game.monsters[index];
+      if (monster.hp <= 0) {
+        const defeatedMonster = monster;
+        applyEnemyDeathSkillEffects(defeatedMonster);
+        trackGoalKill(monster);
+        awardXp(monster.xp, monster.name);
+        game.monsters.splice(index, 1);
+        trackRunStat("monstersDefeated");
+        playSoundEffect("monsterDefeat");
+        log(`The ${monster.name} is defeated.`);
+        dropEnemyLoot(defeatedMonster);
+        checkCustomGoalCompletion();
+      }
+    }
+    if (game.boss && game.boss.hp <= 0) {
+      defeatBoss();
+    }
+    return true;
+  };
 
   effects.forEach((effect) => {
     const amount = Number(effect.value || 0);
     const extra = Number(effect.extra || 0);
+
+    if (effect.type === "grassHeal" && amount !== 0) {
+      const previousHp = game.hp;
+      game.hp = Math.min(getPlayerMaxHp(), Math.max(0, game.hp + amount));
+      const healed = game.hp - previousHp;
+      trackRunStat("healingRecovered", Math.max(0, healed));
+      log(`${sourceName} heals HP by ${Math.abs(healed || amount)}.`);
+      handleHealingItemEnemySkill(Math.max(0, healed || amount));
+      appliedAny = true;
+      return;
+    }
+
+    if (effect.type === "grassMaxHpAtFull" && amount !== 0) {
+      if (game.hp >= getPlayerMaxHp()) {
+        const previousMax = getPlayerMaxHp();
+        game.permanentBonuses.maxHp += amount;
+        const nextMax = getPlayerMaxHp();
+        game.hp = Math.min(nextMax, game.hp + Math.max(0, nextMax - previousMax));
+        log(`${sourceName} raises max HP by ${amount} because your HP was full.`);
+        appliedAny = true;
+      } else {
+        log(`${sourceName} fizzles because your HP is not full.`);
+      }
+      return;
+    }
+
+    if (effect.type === "grassRevive") {
+      game.reviveCharges = Math.max(0, game.reviveCharges ?? 0) + 1;
+      log(`${sourceName} grants a revival ward.`);
+      appliedAny = true;
+      return;
+    }
+
+    if (effect.type === "grassMaxHungerUp" && amount > 0) {
+      if (game.recipe?.hungerEnabled === true) {
+        const previousMax = getPlayerMaxHunger();
+        game.permanentBonuses.maxHunger += amount;
+        const nextMax = getPlayerMaxHunger();
+        game.hungerMax = nextMax;
+        game.hunger = Math.min(nextMax, game.hunger + Math.max(0, nextMax - previousMax));
+        log(`${sourceName} raises max hunger by ${amount}.`);
+        appliedAny = true;
+      } else {
+        log(`${sourceName} fizzles because hunger is disabled in this recipe.`);
+      }
+      return;
+    }
+
+    if (effect.type === "grassMaxHungerDown" && amount > 0) {
+      if (game.recipe?.hungerEnabled === true) {
+        game.permanentBonuses.maxHunger -= amount;
+        game.hungerMax = getPlayerMaxHunger();
+        game.hunger = Math.min(game.hunger, game.hungerMax);
+        log(`${sourceName} lowers max hunger by ${amount}.`);
+        appliedAny = true;
+      } else {
+        log(`${sourceName} fizzles because hunger is disabled in this recipe.`);
+      }
+      return;
+    }
+
+    if (effect.type === "grassFireBreath" && amount > 0) {
+      appliedAny = applyGrassBurstDamage(amount) || appliedAny;
+      return;
+    }
+
+    if (effect.type === "grassLeap") {
+      const destination = getRandomWarpPlayerDestination();
+      if (!destination) {
+        log(`${sourceName} crackles, but nowhere safe opens up.`);
+      } else {
+        game.player = destination;
+        revealCurrentView();
+        log(`${sourceName} leaps you elsewhere on the floor.`);
+        appliedAny = true;
+      }
+      return;
+    }
+
+    if (effect.type === "grassStrengthUp" && amount > 0) {
+      game.permanentBonuses.attack += amount;
+      log(`${sourceName} raises strength by ${amount}.`);
+      appliedAny = true;
+      return;
+    }
+
+    if (effect.type === "grassStrengthDown" && amount > 0) {
+      game.permanentBonuses.attack -= amount;
+      log(`${sourceName} lowers strength by ${amount}.`);
+      appliedAny = true;
+      return;
+    }
+
+    if (effect.type === "grassSelfDamage" && amount > 0) {
+      const damage = applyEnvironmentalDamage(amount, "player");
+      trackRunStat("damageTaken", damage);
+      game.hp = Math.max(0, game.hp - damage);
+      log(`${sourceName} hits you for ${damage} damage.`);
+      if (game.hp <= 0) {
+        game.hp = 0;
+        endRun("collapse");
+        if (!game.ended) {
+          appliedAny = true;
+          return;
+        }
+        log("You collapsed in the dungeon. Generate or load a recipe to retry.");
+      }
+      appliedAny = true;
+      return;
+    }
+
+    if (effect.type === "grassTrapSight") {
+      revealAllTraps();
+      trackRunStat("buffsApplied");
+      addOrRefreshBuff({
+        name: `${sourceName} Trap Sight`,
+        attack: 0,
+        defense: 0,
+        seeTraps: true,
+        turns: 20,
+      });
+      log(`${sourceName} reveals nearby traps to you.`);
+      appliedAny = true;
+      return;
+    }
+
+    if (effect.type === "grassActionSpeed" && amount > 0) {
+      trackRunStat("buffsApplied");
+      addOrRefreshBuff({
+        name: `${sourceName} Haste`,
+        attack: 0,
+        defense: 0,
+        haste: true,
+        turns: Math.max(1, amount),
+      });
+      log(`${sourceName} speeds you up for ${Math.max(1, amount)} turns.`);
+      appliedAny = true;
+      return;
+    }
+
+    if (effect.type === "grassAttackBuff" && amount > 0) {
+      trackRunStat("buffsApplied");
+      addOrRefreshBuff({
+        name: sourceName,
+        attack: 3,
+        defense: 0,
+        turns: Math.max(1, amount),
+      });
+      log(`${sourceName} raises attack for ${Math.max(1, amount)} turns.`);
+      appliedAny = true;
+      return;
+    }
+
+    if (effect.type === "grassDefenseBuff" && amount > 0) {
+      trackRunStat("buffsApplied");
+      addOrRefreshBuff({
+        name: `${sourceName} Guard`,
+        attack: 0,
+        defense: 3,
+        turns: Math.max(1, amount),
+      });
+      log(`${sourceName} raises defense for ${Math.max(1, amount)} turns.`);
+      appliedAny = true;
+      return;
+    }
+
+    if (effect.type === "grassInvincible" && amount > 0) {
+      trackRunStat("buffsApplied");
+      addOrRefreshBuff({
+        name: `${sourceName} Invincibility`,
+        attack: 0,
+        defense: 0,
+        invincible: true,
+        turns: Math.max(1, amount),
+      });
+      log(`${sourceName} makes you invincible for ${Math.max(1, amount)} turns.`);
+      appliedAny = true;
+      return;
+    }
+
+    if (effect.type === "grassLevelUp" && amount > 0) {
+      appliedAny = adjustPlayerLevel(amount, sourceName) !== 0 || appliedAny;
+      return;
+    }
+
+    if (effect.type === "grassLevelDown" && amount > 0) {
+      appliedAny = adjustPlayerLevel(-amount, sourceName) !== 0 || appliedAny;
+      return;
+    }
 
     if (effect.type === "heal" && amount !== 0) {
       const previousHp = game.hp;
@@ -13159,7 +13604,7 @@ function useItemEntry(entry, removeEntry, replaceEntry = null) {
     return false;
   }
   const activeEffects = getItemEffects(entry).filter((effect) => effect?.enabled);
-  const onlyHealingEffect = activeEffects.length > 0 && activeEffects.every((effect) => effect.type === "heal" && Number(effect.value || 0) >= 0);
+  const onlyHealingEffect = activeEffects.length > 0 && activeEffects.every((effect) => ["heal", "grassHeal"].includes(effect.type) && Number(effect.value || 0) >= 0);
   if (onlyHealingEffect && game.hp >= getPlayerMaxHp()) {
     log(`${getVisibleItemName(entry)} is saved for later because HP is already full.`);
     render();
@@ -13185,6 +13630,10 @@ function useItemEntry(entry, removeEntry, replaceEntry = null) {
   if (effectResult.pendingChoice) {
     render();
     return false;
+  }
+  if (game.ended) {
+    render();
+    return true;
   }
   advanceTurn();
   render();
@@ -14029,6 +14478,9 @@ function rollDamage(attack, defense) {
 }
 
 function applyEnvironmentalDamage(damage, target) {
+  if (target === "player" && hasEquippedEffect("invincible")) {
+    return 0;
+  }
   if (activeEffectIs("doubleDamage", target)) {
     return damage * 2;
   }
@@ -14036,6 +14488,23 @@ function applyEnvironmentalDamage(damage, target) {
     return Math.max(1, Math.ceil(damage / 2));
   }
   return damage;
+}
+
+function revealAllTraps() {
+  game.traps.forEach((trap) => {
+    trap.visible = true;
+  });
+}
+
+function tryConsumeReviveCharge() {
+  if ((game.reviveCharges ?? 0) <= 0) {
+    return false;
+  }
+  game.reviveCharges = Math.max(0, (game.reviveCharges ?? 0) - 1);
+  game.hp = Math.max(1, Math.ceil(getPlayerMaxHp() * 0.5));
+  log(`A revival ward restores you with ${game.hp} HP.`);
+  render();
+  return true;
 }
 
 function getBossCenter(boss = game.boss) {
