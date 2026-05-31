@@ -4469,8 +4469,8 @@ function normalizeEnemySkills(skills = undefined) {
 
 function getEnemySkillSummaryText(skills = undefined) {
   const labels = normalizeEnemySkills(skills)
-    .filter((skill) => skill.enabled)
-    .map((skill) => getEnemySkillDefinition(skill.type)?.label ?? skill.type)
+    .filter((skill) => skill.enabled && Boolean(getEnemySkillDefinition(skill.type)))
+    .map((skill) => getEnemySkillDefinition(skill.type)?.label ?? "")
     .filter(Boolean);
   return labels.join(", ");
 }
@@ -4576,6 +4576,23 @@ function readEnemySkillFromRow(skillRow) {
 
 function refreshEnemySkillSummaries() {
   enemyPoolList.querySelectorAll(".enemy-skill-row").forEach((skillRow) => {
+    updateEnemySkillRowSummary(skillRow);
+  });
+}
+
+function updateEnemySkillRowSummary(skillRow) {
+  if (!skillRow) {
+    return;
+  }
+  const summary = skillRow.querySelector(".enemy-skill-summary");
+  if (!summary) {
+    return;
+  }
+  summary.textContent = describeEnemySkill(readEnemySkillFromRow(skillRow));
+}
+
+function refreshEnemySkillSummariesForLevel(levelRow) {
+  levelRow?.querySelectorAll(".enemy-skill-row").forEach((skillRow) => {
     const summary = skillRow.querySelector(".enemy-skill-summary");
     if (!summary) {
       return;
@@ -17402,6 +17419,7 @@ trapsVisibleEnabled?.addEventListener("change", () => {
 });
 
 enemyPoolList.addEventListener("change", (event) => {
+  const levelRow = event.target.closest(".enemy-level-row");
   const familyToggle = event.target.closest("[data-family-toggle]");
   if (familyToggle) {
     setEnemyFamilyEnabled(familyToggle.closest(".enemy-family"), familyToggle.checked);
@@ -17415,8 +17433,13 @@ enemyPoolList.addEventListener("change", (event) => {
       skillRow.replaceWith(replacement.firstElementChild);
     }
   }
-  refreshEnemySkillSummaries();
-  updateEnemyLevelSkillSummaries();
+  if (levelRow) {
+    refreshEnemySkillSummariesForLevel(levelRow);
+    updateEnemyLevelSkillSummary(levelRow);
+  } else {
+    refreshEnemySkillSummaries();
+    updateEnemyLevelSkillSummaries();
+  }
   updateEnemyFamilySummaries();
   updateEnemyFamilyToggles();
   updateEnemyPursuitControls();
@@ -17438,8 +17461,16 @@ enemyPoolList.addEventListener("change", (event) => {
 });
 
 enemyPoolList.addEventListener("input", (event) => {
-  refreshEnemySkillSummaries();
-  updateEnemyLevelSkillSummaries();
+  const skillRow = event.target.closest(".enemy-skill-row");
+  const levelRow = event.target.closest(".enemy-level-row");
+  if (skillRow) {
+    updateEnemySkillRowSummary(skillRow);
+  }
+  if (levelRow) {
+    updateEnemyLevelSkillSummary(levelRow);
+  } else {
+    updateEnemyLevelSkillSummaries();
+  }
   updateEnemyFamilySummaries();
   const affectsFamilyReferences = Boolean(event.target.closest('[data-target="familyName"]'));
   if (affectsFamilyReferences) {
