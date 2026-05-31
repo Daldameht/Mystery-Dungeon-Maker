@@ -2795,11 +2795,11 @@ function renderItemPoolControls(rules = undefined) {
              </label>`
           : "";
         const sellControl = rule.kind !== "gold"
-          ? `<label class="item-pool-stat">
+          ? `<label class="item-pool-stat item-pool-price">
                 <span>Sell</span>
                 <input type="number" min="0" step="1" data-target="sellValue" value="${rule.sellValue ?? 0}" />
               </label>
-              <label class="item-pool-stat">
+              <label class="item-pool-stat item-pool-price">
                 <span>Buy</span>
                 <input type="number" min="0" step="1" data-target="buyValue" value="${rule.buyValue ?? 0}" />
               </label>`
